@@ -27,8 +27,8 @@ import os
 import configparser
 from decimal import Decimal
 
-# Install external dependencies
-# !{sys.executable} -m pip install python-dotenv numpy matplotlib pandas scipy
+# Install fixed versions of external dependencies to ensure things work 
+# !{sys.executable} -m pip install python-dotenv==1.0.1 numpy==1.24.4 matplotlib==3.8.3 pandas==2.2.0 pyarrow==15.0.0 scipy==1.12.0
 
 import scipy
 from scipy import integrate
@@ -467,7 +467,7 @@ ax.axvline(4.3, linewidth=1, linestyle='--', color='black', alpha=0.5)
 ax.set_xticklabels([1,4.3,10,100])
 fig.savefig(os.path.join('images', label_filename_dict['fig:ideal_ignition']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## D-T reaction Recreate Lawson's 1955 Q vs T plot for various ntau values
 
 # %%
@@ -2118,7 +2118,8 @@ efficiency_table_latex = efficiency_table_df.to_latex(
                   escape=False,
                   index=False,
                   formatters={},
-                  col_space=20,
+                  #col_space has been removed in pandas 1.3.0
+                  #col_space=20,
                   na_rep=latexutils.table_placeholder,
                   #header=display_header_map.values(),
                    )
@@ -2859,7 +2860,7 @@ def icf_mcf_calculate(row):
 icf_mif_df = icf_mif_df.apply(lambda row: icf_mcf_calculate(row), axis=1)
 icf_mif_df
 
-# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
+# %% [markdown] heading_collapsed=true
 # ### Make LaTeX dataframe for ICF/MIF experimental data, save data tables
 
 # %% hidden=true
@@ -2918,7 +2919,7 @@ fh.close()
 
 latex_icf_mif_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Set peaking values
 
 # %%
@@ -2972,7 +2973,7 @@ peaking_dict = {'Tokamak': {'peaking_temperature': tokamak_peaking_temperature,
                 #           'peaking_density': 2},
                }
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Make LaTeX table for peaking values
 
 # %%
@@ -3006,7 +3007,7 @@ with pd.option_context("max_colwidth", 1000):
 peaking_df
 
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Adjust, infer, and calculate MCF values
 
 # %%
@@ -3074,7 +3075,7 @@ def process_mcf_experimental_result(row):
 mcf_df = mcf_df.apply(process_mcf_experimental_result, axis=1)
 mcf_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Make LaTeX dataframe for MCF experimental data and create table file
 
 # %%
@@ -3217,7 +3218,7 @@ for table_dict in table_list:
 latex_mcf_df
 
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Adjust MIF and ICF values so they can be combined with MCF data
 #
 
@@ -3242,7 +3243,7 @@ def adjust_icf_mif_result(row):
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
 icf_mif_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Merge `mcf_df`, `mif_df` and `icf_df` so they can be plotted together
 
 # %%
@@ -3519,7 +3520,7 @@ icf_curves = [{'Q':float('inf'),
 # This is needed for the correct ordering of the legend entries
 legend_handles = []
 
-with plt.style.context(['seaborn-paper', './styles/large.mplstyle'], after_reset=True):
+with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     fig, ax = plt.subplots(dpi=dpi)
     fig.set_size_inches(figsize_fullpage)
 
@@ -3964,7 +3965,7 @@ def is_concept_record(row):
         return False
     
 mcf_mif_icf_df['is_concept_record'] = mcf_mif_icf_df.apply(is_concept_record, axis=1)
-mcf_mif_icf_df
+mcf_mif_icf_df.sort_values(by='Year', inplace=True)
 
 # %% [markdown]
 # ### Plot of Triple Product vs Year
@@ -4184,7 +4185,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     sparc_rect = patches.Rectangle((2025, sparc_tp-sparc_minus_error), 5, sparc_minus_error, edgecolor='r', facecolor='r', alpha=1)
 
     ax.add_patch(sparc_rect)
-    annotation = {'s': 'SPARC*',
+    annotation = {'text': 'SPARC*',
                   'xy': (2027.5, sparc_tp - 2e21),
                   'xytext': (2022.5, 6e20),
                   'arrowprops': {'arrowstyle': '->'},
@@ -4199,7 +4200,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     iter_rect = patches.Rectangle((2035, iter_tp-iter_minus_error), 5, iter_minus_error, edgecolor='r', facecolor='r', alpha=1)
 
     ax.add_patch(iter_rect)
-    annotation = {'s': 'ITER*',
+    annotation = {'text': 'ITER*',
                   'xy': (2037.5, iter_tp),
                   'xytext': (2034, 6e20),
                   'arrowprops': {'arrowstyle': '->'},
