@@ -25,7 +25,7 @@ there is currently no caching functionality.
 - Make sure the System Dependencies are already installed
 ```bash
 # Clone the repository
-git clone https://github.com/swurzel/lawson-criterion-paper.git
+git clone git@github.com:swurzel/lawson-criterion-paper.git
 
 # Navigate to the project directory
 cd lawson-criterion-paper
