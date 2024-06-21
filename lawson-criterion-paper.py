@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.7
+#       jupytext_version: 1.16.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -26,9 +26,6 @@ import sys
 import os
 import configparser
 from decimal import Decimal
-
-# Install fixed versions of external dependencies to ensure things work 
-# !{sys.executable} -m pip install python-dotenv==1.0.1 numpy==1.24.4 matplotlib==3.8.3 pandas==2.2.0 pyarrow==15.0.0 scipy==1.12.0
 
 import scipy
 from scipy import integrate
