@@ -17,7 +17,7 @@
 #
 # Samuel E. Wurzel, Scott C. Hsu
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Import python libraries, import fusionlib, setup Airtable credentials, configure LaTeX plotting
 
 # %%
@@ -151,7 +151,7 @@ if not os.path.exists('images'):
 
 print('Setup complete.')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Table of variable names
 
 # %%
@@ -237,7 +237,7 @@ variable_df
 #print(glossary_table_latex)
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## Cross sections and reactivities
 
 # %% [markdown]
@@ -330,7 +330,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:reactivities']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Bremsstrahlung
 
 # %% [markdown]
@@ -465,7 +465,7 @@ ax.axvline(4.3, linewidth=1, linestyle='--', color='black', alpha=0.5)
 ax.set_xticklabels([1,4.3,10,100])
 fig.savefig(os.path.join('images', label_filename_dict['fig:ideal_ignition']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## D-T reaction Recreate Lawson's 1955 Q vs T plot for various ntau values
 
 # %%
@@ -646,7 +646,7 @@ ax.set_xlim(0.1, 100)
 ax.set_ylim(1e-3, 1e3)
 fig.savefig(os.path.join('images', label_filename_dict['fig:Q_vs_T_extended']), bbox_inches='tight')
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## D-T reaction Lawson parameter and triple product for idealized MCF and ICF
 
 # %% [markdown] hidden=true
@@ -1036,7 +1036,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:D-3He_b']), bbox_inches='tight')
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## p-11B reaction
 
 # %% hidden=true
@@ -1398,7 +1398,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:pB11_vs_bremsstrahlung']), bbox_inches='tight')
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## D-T, Catalyzed D-D, D-3He, and p-11B Combined
 
 # %% [markdown]
@@ -1760,7 +1760,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:all_reactions_b']), bbox_inches='tight')
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## Recreate D-T, Cat-DD, and D-3He plots from published literature as a check
 
 # %% hidden=true
@@ -1949,7 +1949,7 @@ ax.set_ylim(1e21, 1e27)
 fig.savefig('images/nevins_1998_d=5_n_T_tau_E_vs_T.png', bbox_inches='tight')
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## Engineering Q
 
 # %% hidden=true
@@ -2082,7 +2082,7 @@ ax.yaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 ax.grid('on', which='both', axis='both')
 fig.savefig(os.path.join('images', label_filename_dict['fig:Qeng_appendix']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Efficiency table
 
 # %%
@@ -2127,7 +2127,7 @@ fh.write(efficiency_table_latex)
 fh.close()
 #print(efficiency_table_latex)
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## Profile Plots
 
 # %% [markdown]
@@ -2337,7 +2337,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images/', label_filename_dict['fig:peaked_broad_profiles_b']), bbox_inches='tight')
 
-# %% [markdown] hidden=true
+# %% [markdown] hidden=true jp-MarkdownHeadingCollapsed=true
 # ## Calculate DT requirements accounting for adjustments (profiles, impurities, $C_B$)
 
 # %% hidden=true
@@ -2392,7 +2392,7 @@ DT_requirements_df = pd.concat([DT_requirements_df, new_columns_df], axis=1)
 # Required for obtaining clean looking plots
 DT_requirements_df = DT_requirements_df.replace(math.inf, 1e30)
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Plot DT requirements
 
 # %%
@@ -2616,7 +2616,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:effect_of_bremsstrahlung_b']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Calculate Lawson parameter, triple product, and p-tau minima
 
 # %% hidden=true
@@ -2638,7 +2638,7 @@ for col in DT_requirements_df.columns:
         DT_requirement_minimum_values_df = pd.DataFrame(data)
 DT_requirement_minimum_values_df
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Analysis of Experimental Results
 
 # %% [markdown]
@@ -2873,7 +2873,6 @@ header_values = {**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map}.v
 icf_mif_df = icf_mif_df[header_keys]
 
 def format_icf_mif_experimental_result(row):
-### Infer peak ion temperatures so it can be compared to MCF and MIF###
     if not math.isnan(row['ptau']):
         row['ptau'] = '{:.2f}'.format(row['ptau'])
         row['ptau'] = latexutils.siunitx_num(row['ptau'])
@@ -2892,19 +2891,17 @@ latex_icf_mif_df = icf_mif_df.apply(lambda row: format_icf_mif_experimental_resu
 
 caption = "Data for ICF and MIF concepts."
 label = "tab:icf_mif_data_table"
-# Make latex table and save to file
-# Due to obscure bug described here, https://github.com/pandas-dev/pandas/issues/6491
-# we use the `with` statement to set context
-with pd.option_context("max_colwidth", 1000):
-    icf_mif_table_latex = latex_icf_mif_df.to_latex(
-                  caption=caption,
-                  label=label,
-                  escape=False,
-                  na_rep=latexutils.table_placeholder,
-                  index=False,
-                  formatters={},
-                  header=header_values,
-                )
+
+latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map})    
+icf_mif_table_latex = latex_icf_mif_df.to_latex(
+                         caption=caption,
+                         label=label,
+                         escape=False,
+                         na_rep=latexutils.table_placeholder,
+                         index=False,
+                         formatters={},
+                         #header=header_values,
+                      )
 icf_mif_table_latex = latexutils.JFE_comply(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.full_width_table(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.sideways_table(icf_mif_table_latex)
@@ -3187,30 +3184,24 @@ for table_dict in table_list:
         if header in mcf_columns_to_display:
             display_header_map[header] = header_map[header]
     filtered_concept_latex_mcf_df = concept_latex_mcf_df.filter(items=mcf_columns_to_display)
-
-    # Make latex table and save to file
-    # Due to obscure bug descrived here, https://github.com/pandas-dev/pandas/issues/6491
-    # we use the `with` statement to set context
-    with pd.option_context("max_colwidth", 1000):
-        mcf_table_latex = filtered_concept_latex_mcf_df.to_latex(
-                          caption=table_dict['caption'],
-                          label=table_dict['label'],
-                          escape=False,
-                          index=False,
-                          formatters={},
-                          na_rep=latexutils.table_placeholder,
-                          header=display_header_map.values(),
-                           )
+    
+    # Rename the columns of the DataFrame for printing
+    filtered_concept_latex_mcf_df = filtered_concept_latex_mcf_df.rename(columns=display_header_map)    
+    mcf_table_latex = filtered_concept_latex_mcf_df.to_latex(
+                      caption=table_dict['caption'],
+                      label=table_dict['label'],
+                      escape=False,
+                      index=False,
+                      formatters={},
+                      na_rep=latexutils.table_placeholder,
+                      )
     mcf_table_latex = latexutils.JFE_comply(mcf_table_latex)
     mcf_table_latex = latexutils.full_width_table(mcf_table_latex)
     mcf_table_latex = latexutils.sideways_table(mcf_table_latex)
     mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote)
-    #print(mcf_table_latex)
     fh=open(os.path.join('tables', label_filename_dict[table_dict['label']]), 'w')
     fh.write(mcf_table_latex)
     fh.close()
-
-latex_mcf_df
 
 
 # %% [markdown]
@@ -3252,7 +3243,7 @@ mcf_mif_icf_df = mcf_df_no_bibtex.merge(icf_mif_df_no_bibtex, how='outer')
 mcf_mif_icf_df['T_i_max'] = mcf_mif_icf_df['T_i_max'].astype(float)
 mcf_mif_icf_df
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Global Plotting Configuration
 
 # %%
@@ -3315,8 +3306,7 @@ concept_dict = {'Tokamak': {'color': red,
                 'Laser ICF': {'color': black,
                               'marker': 'x',
                               'markersize': 70,
-                             },
-               }
+                             }}
 
 concept_list = ['Tokamak', 'Laser ICF', 'Stellarator', 'MagLIF', 'Spherical Tokamak', 'Z Pinch', 'FRC', 'Spheromak', 'Mirror', 'RFP', 'Pinch'] 
 
@@ -3339,44 +3329,40 @@ q_type = 'sci'
 
 # MCF bands to display
 mcf_bands = [
-         {'Q':float('inf'),
-          'color': 'darkred',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = \infty$',
-          'alpha': alpha},
-         {'Q':10,
-          'color': 'red',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 10$',
-          'alpha': alpha},
-         {'Q':2,
-          'color': 'darkorange',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 2$',
-          'alpha': alpha},
-         {'Q':1,
-          'color': 'green',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 1$',
-          'alpha': alpha},
-         {'Q':0.1,
-          'color': 'blue',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.1$',
-          'alpha': 1/3},
-         {'Q':0.01,
-          'color': 'blue',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.01$',
-          'alpha': 1/4},
-         {'Q':0.001,
-          'color': 'blue',
-          'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.001$',
-          'alpha': 1/5},
-         #{'Q':0.0001,
-         # 'color': 'blue',
-         # 'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.0001$',
-         # 'alpha': 1/6},
-        ]
+    {'Q': float('inf'),
+     'color': 'darkred',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = \infty$',
+     'alpha': alpha},
+    {'Q': 10,
+     'color': 'red',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 10$',
+     'alpha': alpha},
+    {'Q': 2,
+     'color': 'darkorange',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 2$',
+     'alpha': alpha},
+    {'Q': 1,
+     'color': 'green',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 1$',
+     'alpha': alpha},
+    {'Q': 0.1,
+     'color': 'blue',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.1$',
+     'alpha': 1/3},
+    {'Q': 0.01,
+     'color': 'blue',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.01$',
+     'alpha': 1/4},
+    {'Q': 0.001,
+     'color': 'blue',
+     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.001$',
+     'alpha': 1/5}
+]
 
 
 icf_ex = experiment.IndirectDriveICFDTExperiment()
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Lawson parameter vs ion temperature
 
 # %%
@@ -3489,7 +3475,7 @@ ntauE_indicators = {
               'yoff': 0.},
     'GOL-3': {'arrow': True,
              'xabs': 3,
-             'yabs': 4e17},
+             'yabs': 7e17},
     'T-3': {'arrow': True,
              'xoff': -0.3,
              'yoff': 0.0},
@@ -3511,6 +3497,9 @@ ntauE_indicators = {
     'ZT-40M': {'arrow': True,
                'xabs': 0.3,
                'yabs': 3.2e16},
+    'FuZE': {'arrow': True,
+             'xabs': 3,
+             'yabs': 2.2e17},
 }
 
 # Iignition ICF curve
@@ -3668,7 +3657,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     #plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_ntauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Triple Product vs ion temperature
 
 # %%
@@ -3741,7 +3730,7 @@ nTtauE_indicators = {
     #            'xabs': 1.35,
     #            'yabs': 1e17},
     'FuZE': {'arrow': True,
-             'xabs': 2.1,
+             'xabs': 3,
              'yabs': 4e17},
     'MagLIF': {'arrow': True,
               'xabs': 5,
@@ -3955,7 +3944,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Triple product vs year acheived
 
 # %%
@@ -4055,9 +4044,9 @@ indicators = {
     'C-2U': {'arrow': True,
              'xabs': 2014,
              'yabs': 4e17},
-    #'C-2W': {'arrow': True,
-    #         'xabs': 2021,
-    #         'yabs': 1e17},
+    'C-2W': {'arrow': True,
+             'xabs': 2025,
+             'yabs': 1.6e17},
     'C-Stellarator': {'arrow': True,
                       'xabs': 1963,
                       'yabs': 0.3e14},
