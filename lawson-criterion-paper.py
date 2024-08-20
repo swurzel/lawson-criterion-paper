@@ -2638,25 +2638,25 @@ for col in DT_requirements_df.columns:
         DT_requirement_minimum_values_df = pd.DataFrame(data)
 DT_requirement_minimum_values_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Analysis of Experimental Results
 
 # %% [markdown]
 # ### Load experimental data
 
 # %%
-#import extract_data
 # Get the raw experimental result dataframe
 filename = 'data/experimental_results.pkl'
-# Uncomment below to extract data from database
-#extract_data.extract_data_from_airtable(filename)
 experimental_result_df = pd.read_pickle(filename)
 
+# Remove the below:
 # Copy the temperatures to a separate display column so the printed tables have correct number of signficant figures
-experimental_result_df['T_e_avg'] = experimental_result_df['T_e_avg']
-experimental_result_df['T_e_max'] = experimental_result_df['T_e_max']
-experimental_result_df['T_i_avg'] = experimental_result_df['T_i_avg']
-experimental_result_df['T_i_max'] = experimental_result_df['T_i_max']
+#experimental_result_df['T_e_avg'] = experimental_result_df['T_e_avg']
+#experimental_result_df['T_e_max'] = experimental_result_df['T_e_max']
+#experimental_result_df['T_i_avg'] = experimental_result_df['T_i_avg']
+#experimental_result_df['T_i_max'] = experimental_result_df['T_i_max']
+
+# Convert scientific notation strings to floats
 experimental_result_df['n_e_avg'] = experimental_result_df['n_e_avg'].astype(float)
 experimental_result_df['n_e_max'] = experimental_result_df['n_e_max'].astype(float)
 experimental_result_df['n_i_avg'] = experimental_result_df['n_i_avg'].astype(float)
@@ -2671,17 +2671,16 @@ experimental_result_df['tau_stag'] = experimental_result_df['tau_stag'].astype(f
 experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
 
 # %% [markdown]
-# ### Split experimental results into MCF, MIF, and ICF dataframes, define headers for dataframe and latex tables
+# ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
 
 # %%
-notes = 'notes'
-
 #######################
 
 # MCF
 MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'RFP', 'Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'FRC']
 mcf_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(MCF_concepts)]
 
+# Mapping from data column headers to what should be printed in latex tables
 mcf_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
@@ -2701,19 +2700,21 @@ mcf_airtable_latex_map = {
     'tau_E': r'\thead{$\tau_{E}$ \\ (\si{s})}$',
 }
 
+# Mapping from what's calculated in this code to what should be printed in latex tables
 mcf_calculated_latex_map = {
     'ntauEstar_max': r'\thead{$n_{i0} \tau_{E}^{*}$ \\ (\si{m^{-3}~s})}',
     'nTtauEstar_max': r'\thead{$n_{i0} T_{i0} \tau_{E}^{*}$ \\ (\si{keV~m^{-3}~s})}',
-
 }
 
 # Only keep columns that are relevant to MCF
-mcf_df = mcf_experimental_result_df.filter(items=list(mcf_airtable_latex_map.keys()) + [notes])
+mcf_df = mcf_experimental_result_df.filter(items=list(mcf_airtable_latex_map.keys()))
 
 #######################
 # ICF/MIF
 ICF_MIF_concepts = ['Laser ICF', 'MagLIF']
 icf_mif_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(ICF_MIF_concepts)]
+
+# Mapping from data column headers to what should be printed in latex tables
 icf_mif_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
@@ -2724,11 +2725,11 @@ icf_mif_airtable_latex_map = {
     'T_e_avg': r'\thead{$T_e$ \\ (\si{keV})}',
     'rhoR_tot': r'\thead{$\rho R_{tot(n)}^{no (\alpha)}$ \\ (\si{g/cm^{-2}})}',
     'YOC': r'YOC',
-    #'mu': r'$\mu$',
     'p_stag': r'\thead{$p_{stag}$ \\ (\si{Gbar})}',
     'tau_stag': r'\thead{$\tau_{stag}$ \\ (\si{s})}',
 }
 
+# Mapping from what's calculated in this code to what should be printed in latex tables
 icf_mif_calculated_latex_map = {
     'ptau': r'\thead{$P\tau$ \\ (\si{atm~s})}',
     'ntauE_avg': r'\thead{$n\tau$ \\ (\si{m^{-3}~s})}',
@@ -2736,17 +2737,15 @@ icf_mif_calculated_latex_map = {
 
 }
 
-icf_mif_df = icf_mif_experimental_result_df.filter(items=list(icf_mif_airtable_latex_map.keys()) + [notes])
+icf_mif_df = icf_mif_experimental_result_df.filter(items=list(icf_mif_airtable_latex_map.keys()))
 
 print(f'Split data into {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
-#mcf_df
-#icf_mif_df
+
 
 # %% [markdown] heading_collapsed=true
 # ### Infer, and calculate ICF and MIF values
 
 # %% hidden=true
-
 def ptau_betti_2010(rhoR_tot, T_i_avg, YOC, mu=0.5):
     """Calculate the effective ptau using Betti's 2010 approach and return
     pressure * confinement time in atm s.
@@ -2765,7 +2764,7 @@ def ptau_betti_2010(rhoR_tot, T_i_avg, YOC, mu=0.5):
     T_i_avg -- average ion temperature over burn in keV
     YOC -- yield over clean
     mu -- mu as defined in https://doi.org/10.1063/1.3380857
-          mu is fixed at 0.5 as suggested in paper.
+          mu is fixed at 0.5 as suggested in this paper Section IV.B.1
     """
     ptau = 8 * ((rhoR_tot*float(T_i_avg))**0.8) * (YOC**mu)
     return ptau
@@ -2853,7 +2852,7 @@ def icf_mcf_calculate(row):
     return row
 
 icf_mif_df = icf_mif_df.apply(lambda row: icf_mcf_calculate(row), axis=1)
-icf_mif_df
+#icf_mif_df
 
 # %% [markdown] heading_collapsed=true
 # ### Make LaTeX dataframe for ICF/MIF experimental data, save data tables
@@ -2876,7 +2875,13 @@ def format_icf_mif_experimental_result(row):
     if not math.isnan(row['ptau']):
         row['ptau'] = '{:.2f}'.format(row['ptau'])
         row['ptau'] = latexutils.siunitx_num(row['ptau'])
-    
+
+    if not math.isnan(row['rhoR_tot']):
+        row['rhoR_tot'] = '{:.3f}'.format(row['rhoR_tot'])
+
+    if not math.isnan(row['YOC']):
+        row['YOC'] = '{:.1f}'.format(row['YOC'])
+        
     row['tau_stag'] = latexutils.siunitx_num(row['tau_stag'])
     
     row['nTtauE_avg'] = '{:0.1e}'.format(row['nTtauE_avg'])
@@ -2887,12 +2892,14 @@ def format_icf_mif_experimental_result(row):
     row['Bibtex Strings'] = latexutils.cite(row['Bibtex Strings'])    
     return row
 
+# Format values
 latex_icf_mif_df = icf_mif_df.apply(lambda row: format_icf_mif_experimental_result(row), axis=1)
+# Rename column headers
+latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map})    
 
 caption = "Data for ICF and MIF concepts."
 label = "tab:icf_mif_data_table"
 
-latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map})    
 icf_mif_table_latex = latex_icf_mif_df.to_latex(
                          caption=caption,
                          label=label,
@@ -2900,19 +2907,18 @@ icf_mif_table_latex = latex_icf_mif_df.to_latex(
                          na_rep=latexutils.table_placeholder,
                          index=False,
                          formatters={},
-                         #header=header_values,
                       )
+# Post processing of latex code to display as desired
 icf_mif_table_latex = latexutils.JFE_comply(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.full_width_table(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.sideways_table(icf_mif_table_latex)
+
 fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
 fh.write(icf_mif_table_latex)
 fh.close()
 
-latex_icf_mif_df
-
 # %% [markdown]
-# ### Set peaking values
+# ### Set peaking values for MCF 
 
 # %%
 # Values of peaking depend on Concept Type. Some are calculated from
@@ -3134,11 +3140,15 @@ def mcf_formatting(row):
 
 latex_mcf_df = mcf_df.apply(mcf_formatting, axis=1)
 
-
 mcf_table_footnote = r"""\\$*$ Peak value of density or temperature has been inferred from volume-averaged value as described in Sec.~\ref{sec:inferring_peak_from_average}.\\
 $\dagger$ Ion temperature has been inferred from electron temperature as described in Sec.~\ref{sec:inferring_ion_quantities_from_electron_quantities}.\\
 $\ddagger$ Ion density has been inferred from electron density as described in Sec.~\ref{sec:inferring_ion_quantities_from_electron_quantities}.\\
 $\#$ Energy confinement time $\tau_E^*$ (TFTR/Lawson method) has been inferred from a measurement of the energy confinement time $\tau_E$ (JET/JT-60) method as described in Sec.~\ref{sec:accounting_for_transient_effects}."""
+
+mcf_table_footnote_fixed_references = r"""\\$*$ Peak value of density or temperature has been inferred from volume-averaged value as described in Sec.~IV A 4  of the original paper. \cite{2022_Wurzel_Hsu}\\
+$\dagger$ Ion temperature has been inferred from electron temperature as described in Sec.~IV A 5 of the original paper. \cite{2022_Wurzel_Hsu}\\
+$\ddagger$ Ion density has been inferred from electron density as described in Sec.~IV A 5 of the original paper. \cite{2022_Wurzel_Hsu}\\
+$\#$ Energy confinement time $\tau_E^*$ (TFTR/Lawson method) has been inferred from a measurement of the energy confinement time $\tau_E$ (JET/JT-60) method as described in Sec.~IV A 6 of the original paper. \cite{2022_Wurzel_Hsu}"""
 
 # Only display these headers. ORDER MUST MATCH!
 mcf_columns_to_display = [
@@ -3198,7 +3208,8 @@ for table_dict in table_list:
     mcf_table_latex = latexutils.JFE_comply(mcf_table_latex)
     mcf_table_latex = latexutils.full_width_table(mcf_table_latex)
     mcf_table_latex = latexutils.sideways_table(mcf_table_latex)
-    mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote)
+    #mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote)
+    mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote_fixed_references)
     fh=open(os.path.join('tables', label_filename_dict[table_dict['label']]), 'w')
     fh.write(mcf_table_latex)
     fh.close()
@@ -3362,7 +3373,7 @@ mcf_bands = [
 
 icf_ex = experiment.IndirectDriveICFDTExperiment()
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Lawson parameter vs ion temperature
 
 # %%
@@ -4267,6 +4278,9 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     
     plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
+
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# ## Animation
 
 # %%
 year_list = [i for i in range(1956, 2040)]
