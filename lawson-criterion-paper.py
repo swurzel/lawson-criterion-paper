@@ -2337,7 +2337,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images/', label_filename_dict['fig:peaked_broad_profiles_b']), bbox_inches='tight')
 
-# %% [markdown] hidden=true jp-MarkdownHeadingCollapsed=true
+# %% [markdown] hidden=true
 # ## Calculate DT requirements accounting for adjustments (profiles, impurities, $C_B$)
 
 # %% hidden=true
@@ -2392,7 +2392,7 @@ DT_requirements_df = pd.concat([DT_requirements_df, new_columns_df], axis=1)
 # Required for obtaining clean looking plots
 DT_requirements_df = DT_requirements_df.replace(math.inf, 1e30)
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Plot DT requirements
 
 # %%
@@ -2616,7 +2616,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:effect_of_bremsstrahlung_b']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Calculate Lawson parameter, triple product, and p-tau minima
 
 # %% hidden=true
@@ -3254,7 +3254,7 @@ mcf_mif_icf_df = mcf_df_no_bibtex.merge(icf_mif_df_no_bibtex, how='outer')
 mcf_mif_icf_df['T_i_max'] = mcf_mif_icf_df['T_i_max'].astype(float)
 mcf_mif_icf_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Global Plotting Configuration
 
 # %%
@@ -3668,7 +3668,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     #plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_ntauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Triple Product vs ion temperature
 
 # %%
@@ -3955,7 +3955,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Triple product vs year acheived
 
 # %%
@@ -4279,7 +4279,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Animation
 
 # %%
@@ -4444,5 +4444,159 @@ frames[0].save('animation/lawson.gif', format='GIF',
                append_images=frames[1:],
                save_all=True,
                duration=300, loop=0)
+
+# %%
+import plotly.graph_objects as go
+import plotly.express as px
+import pandas as pd
+import numpy as np
+import matplotlib.colors as mcolors
+import plotly.io as pio
+
+def color_to_rgba(color, alpha):
+    """Convert color name or hex to rgba."""
+    try:
+        rgb = px.colors.hex_to_rgb(color)
+    except ValueError:
+        rgb = mcolors.to_rgb(color)
+    return f'rgba{tuple(list(rgb) + [alpha])}'
+
+# Explicitly define colors to match matplotlib's default cycle
+blue, orange, green, red, purple = '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'
+brown, pink, grey, lime, teal = '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+black = 'black'
+
+# Update concept_dict with Plotly marker symbols
+markersize = 20
+concept_dict = {
+    'Tokamak': {'color': red, 'marker': 'circle', 'markersize': markersize},
+    'Stellarator': {'color': green, 'marker': 'star', 'markersize': markersize},
+    'RFP': {'color': orange, 'marker': 'triangle-down', 'markersize': markersize},
+    'Z Pinch': {'color': blue, 'marker': 'diamond-tall', 'markersize': markersize},
+    'MagLIF': {'color': purple, 'marker': 'star-triangle-up', 'markersize': markersize},
+    'FRC': {'color': teal, 'marker': 'diamond', 'markersize': markersize},
+    'Spheromak': {'color': pink, 'marker': 'square', 'markersize': markersize},
+    'Pinch': {'color': lime, 'marker': 'x', 'markersize': markersize},
+    'Mirror': {'color': brown, 'marker': 'diamond-wide', 'markersize': markersize},
+    'Spherical Tokamak': {'color': grey, 'marker': 'pentagon', 'markersize': markersize},
+    'Laser ICF': {'color': black, 'marker': 'x', 'markersize': markersize}
+}
+
+# Create the base figure
+fig = go.Figure()
+
+# Add MCF bands as filled regions between two curves
+mcf_bands = [
+    {'Q': float('inf'), 'color': 'darkred', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = \infty$", 'alpha': 0.5},
+    {'Q': 10, 'color': 'red', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 10$", 'alpha': 0.5},
+    {'Q': 2, 'color': 'darkorange', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 2$", 'alpha': 0.5},
+    {'Q': 1, 'color': 'green', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 1$", 'alpha': 0.5},
+    {'Q': 0.1, 'color': 'blue', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 0.1$", 'alpha': 0.3},
+    {'Q': 0.01, 'color': 'blue', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 0.01$", 'alpha': 0.2},
+    {'Q': 0.001, 'color': 'blue', 'label': r"$Q_\mathrm{sci}^\mathrm{MCF} = 0.001$", 'alpha': 0.1}
+]
+
+for mcf_band in mcf_bands:
+    q_str = str(mcf_band['Q'])
+    fig.add_trace(go.Scatter(
+        x=DT_requirements_df['T_i0'],
+        y=DT_requirements_df[f'{mcf_ex1.name}__ntauE_Q_{q_type}={q_str}'],
+        fill=None,
+        mode='lines',
+        line_color=mcf_band['color'],
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+    fig.add_trace(go.Scatter(
+        x=DT_requirements_df['T_i0'],
+        y=DT_requirements_df[f'{mcf_ex2.name}__ntauE_Q_{q_type}={q_str}'],
+        fill='tonexty',
+        mode='lines',
+        line_color=mcf_band['color'],
+        name=mcf_band['label'],
+        fillcolor=color_to_rgba(mcf_band['color'], mcf_band['alpha']),
+        hoverinfo='skip'
+    ))
+
+# Add ICF curve
+fig.add_trace(go.Scatter(
+    x=DT_requirements_df['T_i0'],
+    y=DT_requirements_df[f'{icf_ex.name}__ntauE_Q_{q_type}=inf'],
+    mode='lines',
+    line=dict(color='black', width=2),
+    name=r"$(n \tau)_\mathrm{ig,hs}^\mathrm{ICF}$"
+))
+
+# Add scatter plot for each concept
+for concept in concept_list:
+    concept_df = mcf_mif_icf_df[mcf_mif_icf_df['Concept Displayname'] == concept]
+    fig.add_trace(go.Scatter(
+        x=concept_df['T_i_max'],
+        y=concept_df['ntauEstar_max'],
+        mode='markers',
+        marker=dict(
+            color=concept_dict[concept]['color'],
+            symbol=concept_dict[concept]['marker'],
+            size=concept_dict[concept]['markersize'],
+            line=dict(width=2, color='white')
+        ),
+        name=concept,
+        text=[f"{proj} {year}<br><a href='https://www.fusionenergybase.com/project/{proj}' target='_blank'>More info</a>" 
+              for proj, year in zip(concept_df['Project Displayname'], concept_df['Year'])],
+        hoverinfo='text'
+    ))
+
+# Update layout
+fig.update_layout(
+    xaxis_type="log",
+    yaxis_type="log",
+    xaxis_title=r"$T_{i0}, \langle T_i \rangle_\mathrm{n} \; \mathrm{(keV)}$",
+    yaxis_title=r"$n_{i0} \tau_E^*, \; n \tau \; \mathrm{(m^{-3}\,s)}$",
+    xaxis_range=[np.log10(0.01), np.log10(100)],
+    yaxis_range=[np.log10(1e14), np.log10(1e22)],
+    legend_title_text='Concept',
+    hovermode='closest',
+    height=800,
+    width=1000,
+    hoverdistance=100,
+    font=dict(family="Arial", size=14),
+    title_font=dict(family="Arial", size=16)
+)
+
+fig.add_annotation(
+    text='Prepublication',
+    x=0.02,
+    y=1.5e15,
+    showarrow=False,
+    font=dict(size=60, color='rgba(0,0,0,0.1)'),
+    xref='x',
+    yref='y',
+    textangle=45
+)
+
+# Update the config to render LaTeX
+fig.show(config={
+    'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG'
+})
+fig.write_html("ntaue_vs_temperature_plot.html", 
+               include_plotlyjs=True, 
+               full_html=True, 
+               include_mathjax='cdn',
+               config={'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG',
+                       'modeBarButtonsToAdd': ['hoverclosest', 'hovercompare']})
+
+
+# %%
+DT_requirements_df['T_i0']
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+
+# %%
 
 # %%
