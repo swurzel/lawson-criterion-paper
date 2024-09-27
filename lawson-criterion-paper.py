@@ -4280,170 +4280,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
 
 # %% [markdown]
-# ## Animation
-
-# %%
-year_list = [i for i in range(1956, 2040)]
-year_list = [2040] + year_list
-for year in year_list:
-    print(f'Running {year}...')
-    with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
-        fig, ax = plt.subplots(dpi=dpi)
-        fig.set_size_inches(figsize_fullpage)
-    
-        xmin = 0.01 # keV
-        xmax = 100  # keV
-        ax.set_xlim(xmin, xmax)
-        ymin = 1e14
-        ymax = 1e22
-        ax.set_ylim(ymin, ymax)
-        ax.set_yscale('log')
-        ax.set_xscale('log')
-        ax.set_xlabel(r'$T_{i0}, \langle T_i \rangle_{\rm n} \; {\rm (keV)}$')
-        ax.set_ylabel(r'$n_{i0} \tau_E^*, \; n \tau \; {\rm (m^{-3}~s)}$')
-        ax.grid('on', which='major', axis='both')
-        #ax.set_title('Lawson Parameter vs Ion Temperature', size=16)
-    
-        ##### MCF Bands
-        # In order for ax.fill_between to correctly fill the region that goes to
-        # infinity, the values of infinity in the dataframe must be replaced with
-        # non-infinite values. We replace the infinities with 10x values of the
-        # maximum y that is plotted here.
-        DT_requirements_df = DT_requirements_df.replace(math.inf, ymax*10)
-    
-        
-        for mcf_band in mcf_bands:
-            if mcf_band['Q'] < 1:
-                edgecolor = mcf_band['color']
-            else:
-                edgecolor = 'none'
-            handle = ax.fill_between(DT_requirements_df['T_i0'],
-                            DT_requirements_df[mcf_ex1.name + '__ntauE_Q_' + q_type + '=' + str(mcf_band['Q'])],
-                            DT_requirements_df[mcf_ex2.name + '__ntauE_Q_' + q_type + '=' + str(mcf_band['Q'])],
-                            color=mcf_band['color'],
-                            #label=mcf_band['label'],
-                            label='_hidden' + mcf_band['label'],
-                            zorder=0,
-                            alpha=mcf_band['alpha'],
-                            edgecolor=edgecolor,
-                           )
-            legend_handles.append(handle)
-        
-        ##### ICF curve
-        for icf_curve in icf_curves:
-            handle = ax.plot(DT_requirements_df['T_i0'],
-                             DT_requirements_df[icf_ex.name + '__ntauE_Q_' + q_type + '=' + str(icf_curve['Q'])],                                           linewidth=1,
-                             color=icf_curve['color'],
-                             #label= icf_curve['label'],
-                             label= '_hidden' + icf_curve['label'],
-                             alpha=icf_curve['alpha'],
-                             dashes=icf_curve['dashes'],
-                             )
-            legend_handles.append(handle[0])
-    
-        ##### Scatterplot
-        for concept in concept_list:
-            # Plot points for each concept
-            #concept_df = mcf_mif_icf_df[mcf_mif_icf_df['Concept Displayname']==concept]
-            concept_df = mcf_mif_icf_df[(mcf_mif_icf_df['Concept Displayname']==concept) & (mcf_mif_icf_df['Year']<=year)] 
-            if concept_dict[concept]['marker'] not in ['x', '2', '|', '_']:
-                edgecolor = 'white'
-            else:
-                edgecolor = None
-            handle = ax.scatter(concept_df['T_i_max'],
-                                concept_df['ntauEstar_max'], 
-                                c=concept_dict[concept]['color'], 
-                                marker=concept_dict[concept]['marker'],
-                                s=concept_dict[concept]['markersize'],
-                                edgecolors=edgecolor,
-                                zorder=10,
-                                label=concept,
-                               )
-            #legend_handles.append(handle)
-            # Annotate data points
-            for index, row in concept_df.iterrows():
-                displayname = row['Project Displayname']
-                ntauE_indicator = ntauE_indicators.get(displayname, ntau_default_indicator)
-                text = row['Project Displayname']
-                if text in ['SPARC', 'ITER']:
-                    text += '*'
-                annotation = {'text': text,
-                              'xy': (row['T_i_max'], row['ntauEstar_max']),
-                             }
-                if ntauE_indicator['arrow'] is True:
-                    annotation['arrowprops'] = {'arrowstyle': '->',
-                                                'lw': arrow_width,
-                                               }
-                else:
-                    pass
-                if 'xabs' in ntauE_indicator:
-                    # Annotate with absolute placement
-                    annotation['xytext'] = (ntauE_indicator['xabs'], ntauE_indicator['yabs'])
-                else:
-                    # Annotate with relative placement accounting for logarithmic scale
-                    annotation['xytext'] = (10**ntauE_indicator['xoff'] * row['T_i_max'], 10**ntauE_indicator['yoff'] * row['ntauEstar_max'])
-                annotation['zorder'] = 10
-                ax.annotate(**annotation)
-        
-        # Custom format temperature axis
-        ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
-        
-        ### ANNOTATIONS
-        # Prepublication Watermark
-        ax.annotate('Prepublication', (0.02, 1.5e15), alpha=0.1, size=60, rotation=45)
-        
-        # Right side annotations
-        annotation_offset = 5
-        ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e20), xycoords='data', alpha=1, color='darkred', rotation=0)
-        horiz_line = mpl.patches.Rectangle((1.005, 0.83),
-                                     width=0.06,
-                                     height=0.002,
-                                     transform=ax.transAxes,
-                                     color='darkred',
-                                     clip_on=False
-                                    )
-        ax.add_patch(horiz_line)
-        ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.1e20), xycoords='data', alpha=1, color='darkred', rotation=0)
-        ax.annotate(r'$10$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 1.8e20), xycoords='data', alpha=1, color='red', rotation=0)
-        ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e19), xycoords='data', alpha=1, color='darkorange', rotation=0)
-        ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4.6e19), xycoords='data', alpha=1, color='green', rotation=0)
-        ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='blue', rotation=0)
-        ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='blue', rotation=0)
-        ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='blue', rotation=0)
-        #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='blue', rotation=0)
-        
-        # Inner annotations
-        ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
-    
-        ax.annotate(f'{year}', (10, 1.5e15), alpha=0.8, size=50)
-        if year > 2024:
-            ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
-            ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
-
-        # Legend inside
-        leg = ax.legend(loc='upper left')
-        
-        #leg.set_draggable(state=True)
-        #fig.canvas.resizable = True
-        #plt.show()
-        fig.savefig(os.path.join('animation', f'{year}_fig:scatterplot_ntauE_vs_T'), bbox_inches='tight')
-        fig.clear(True)
-        plt.close(fig)    
-
-# %%
-from PIL import Image
-import glob
-frames = []
-imgs = glob.glob("animation/*.png")
-imgs.sort()
-for i in imgs:
-    new_frame = Image.open(i)
-    frames.append(new_frame)
-# Save into a GIF file that loops forever
-frames[0].save('animation/lawson.gif', format='GIF',
-               append_images=frames[1:],
-               save_all=True,
-               duration=300, loop=0)
+# ## Plotly interactive graph
 
 # %%
 import plotly.graph_objects as go
@@ -4603,3 +4440,18 @@ fig.write_html("ntaue_vs_temperature_plot.html",
 
 
 
+
+# %%
+from PIL import Image
+import glob
+frames = []
+imgs = glob.glob("animation/*.png")
+imgs.sort()
+for i in imgs:
+    new_frame = Image.open(i)
+    frames.append(new_frame)
+# Save into a GIF file that loops forever
+frames[0].save('animation/lawson.gif', format='GIF',
+               append_images=frames[1:],
+               save_all=True,
+               duration=300, loop=0)
