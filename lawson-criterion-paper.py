@@ -2641,7 +2641,7 @@ DT_requirement_minimum_values_df
 # %% [markdown]
 # ## Analysis of Experimental Results
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Load experimental data
 
 # %%
@@ -2670,7 +2670,7 @@ experimental_result_df['p_stag'] = experimental_result_df['p_stag']
 experimental_result_df['tau_stag'] = experimental_result_df['tau_stag'].astype(float)
 experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
 
 # %%
@@ -2742,7 +2742,7 @@ icf_mif_df = icf_mif_experimental_result_df.filter(items=list(icf_mif_airtable_l
 print(f'Split data into {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ### Infer, and calculate ICF and MIF values
 
 # %% hidden=true
@@ -2854,7 +2854,7 @@ def icf_mcf_calculate(row):
 icf_mif_df = icf_mif_df.apply(lambda row: icf_mcf_calculate(row), axis=1)
 #icf_mif_df
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ### Make LaTeX dataframe for ICF/MIF experimental data, save data tables
 
 # %% hidden=true
@@ -2917,7 +2917,7 @@ fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
 fh.write(icf_mif_table_latex)
 fh.close()
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Set peaking values for MCF 
 
 # %%
@@ -2971,7 +2971,7 @@ peaking_dict = {'Tokamak': {'peaking_temperature': tokamak_peaking_temperature,
                 #           'peaking_density': 2},
                }
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Make LaTeX table for peaking values
 
 # %%
@@ -3005,7 +3005,7 @@ with pd.option_context("max_colwidth", 1000):
 peaking_df
 
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Adjust, infer, and calculate MCF values
 
 # %%
@@ -3073,7 +3073,7 @@ def process_mcf_experimental_result(row):
 mcf_df = mcf_df.apply(process_mcf_experimental_result, axis=1)
 mcf_df
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Make LaTeX dataframe for MCF experimental data and create table file
 
 # %%
@@ -3215,7 +3215,7 @@ for table_dict in table_list:
     fh.close()
 
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Adjust MIF and ICF values so they can be combined with MCF data
 #
 
@@ -3240,7 +3240,7 @@ def adjust_icf_mif_result(row):
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
 icf_mif_df
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ### Merge `mcf_df`, `mif_df` and `icf_df` so they can be plotted together
 
 # %%
@@ -3252,9 +3252,10 @@ mcf_mif_icf_df = mcf_df_no_bibtex.merge(icf_mif_df_no_bibtex, how='outer')
 
 # Before plotting we convert all fields which are kept as strings (to maintain sigfigs for tables) to floats for plotting
 mcf_mif_icf_df['T_i_max'] = mcf_mif_icf_df['T_i_max'].astype(float)
+pd.set_option('display.max_rows', None)    # Show all rows
 mcf_mif_icf_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Global Plotting Configuration
 
 # %%
@@ -3668,7 +3669,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     #plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_ntauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Triple Product vs ion temperature
 
 # %%
@@ -3955,7 +3956,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_T']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Triple product vs year acheived
 
 # %%
@@ -4240,11 +4241,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.annotate(**annotation)
     
     # Label horizontal Q_sci^MCF lines
+    
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$', (mcf_horizontal_range_dict[float('inf')][0]+0.5, 1.22e22), alpha=1, color='darkred')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=10$', (mcf_horizontal_range_dict[10][0]+0.5, 6.85e21), alpha=1, color='red')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+0.5, 2.55e21), alpha=1, color='darkorange')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+0.5, 1.45e21), alpha=1, color='green')
-
+    
     projection_rect = patches.Rectangle((1961, 1.5e12), 5, 2e12, edgecolor='white', facecolor='red', alpha=1, hatch='////', zorder=10)
     ax.add_patch(projection_rect)
     ax.annotate('Projections', xy=(1967, 1.7e12), xytext=(1967, 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
@@ -4255,14 +4257,18 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.add_patch(ellipse)
     ax.annotate('Ignition', xy=(1987, 1.7e12), xytext=(1987, 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
 
+    # Caveat Q_sci_^MCF
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$' + r'assumes $T_i=15 {\rm keV}$', (1960, 1e13), color='black', size=9)
+
+    
     # Annotate NIF Ignition Shots
     # Define the ellipse parameters
     center_x, center_y = 2022, 5e21
     width, height = 5, 0.4e22  # Width and height in data coordinates
     ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
     ax.add_patch(ellipse)
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@4{\rm keV}$', (2000, 1.1e22), alpha=1, color='black')
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$@10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$T_i = 4{\rm keV}$', (2000, 1.1e22), alpha=1, color='black')
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
 
     # Add watermark
     ax.annotate('Prepublication', (1960, 1.5e13), alpha=0.1, size=60, rotation=45)
@@ -4277,9 +4283,10 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.legend(ncol=2)
     
     plt.show()
-    fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
+    #fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
+    
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Animation
 
 # %%
