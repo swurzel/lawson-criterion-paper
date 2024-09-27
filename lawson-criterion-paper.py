@@ -4574,29 +4574,32 @@ fig.add_annotation(
     textangle=45
 )
 
-# Update the config to render LaTeX
-fig.show(config={
-    'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG'
-})
+mathjax_url = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js'
+
+mathjax_config = {
+    'tex': {
+        'inlineMath': [['$', '$'], ['\\(', '\\)']],
+        'displayMath': [['$$', '$$'], ['\\[', '\\]']],
+    },
+    'svg': {
+        'fontCache': 'global'
+    },
+    'startup': {
+        'typeset': True,
+        'output': 'svg'
+    }
+}
+#fig.show(config={
+#})
 fig.write_html("ntaue_vs_temperature_plot.html", 
                include_plotlyjs=True, 
                full_html=True, 
                include_mathjax='cdn',
-               config={'mathjax': 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG',
-                       'modeBarButtonsToAdd': ['hoverclosest', 'hovercompare']})
+               config={
+                   'mathjax': mathjax_url,
+                   'MathJax': mathjax_config,
+                   'modeBarButtonsToAdd': ['hoverclosest', 'hovercompare']
+               })
 
 
-# %%
-DT_requirements_df['T_i0']
 
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
