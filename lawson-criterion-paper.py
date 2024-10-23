@@ -151,7 +151,7 @@ if not os.path.exists('images'):
 
 print('Setup complete.')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Table of variable names
 
 # %%
@@ -2641,7 +2641,7 @@ DT_requirement_minimum_values_df
 # %% [markdown]
 # ## Analysis of Experimental Results
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Load experimental data
 
 # %%
@@ -2669,8 +2669,15 @@ experimental_result_df['YOC'] = experimental_result_df['YOC'].astype(float)
 experimental_result_df['p_stag'] = experimental_result_df['p_stag']
 experimental_result_df['tau_stag'] = experimental_result_df['tau_stag'].astype(float)
 experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
+experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# For updated paper, to keep the references short, refer to our 2022 paper for unchanged values
+mask = experimental_result_df['new_or_changed_2024_update'] == False
+experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
+
+print(experimental_result_df['Bibtex Strings'])
+
+# %% [markdown]
 # ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
 
 # %%
@@ -2711,7 +2718,7 @@ mcf_df = mcf_experimental_result_df.filter(items=list(mcf_airtable_latex_map.key
 
 #######################
 # ICF/MIF
-ICF_MIF_concepts = ['Laser ICF', 'MagLIF']
+ICF_MIF_concepts = ['Laser Direct Drive', 'Laser Indirect Drive', 'MagLIF']
 icf_mif_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(ICF_MIF_concepts)]
 
 # Mapping from data column headers to what should be printed in latex tables
@@ -2742,7 +2749,7 @@ icf_mif_df = icf_mif_experimental_result_df.filter(items=list(icf_mif_airtable_l
 print(f'Split data into {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
 
 
-# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
+# %% [markdown] heading_collapsed=true
 # ### Infer, and calculate ICF and MIF values
 
 # %% hidden=true
@@ -2854,7 +2861,7 @@ def icf_mcf_calculate(row):
 icf_mif_df = icf_mif_df.apply(lambda row: icf_mcf_calculate(row), axis=1)
 #icf_mif_df
 
-# %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
+# %% [markdown] heading_collapsed=true
 # ### Make LaTeX dataframe for ICF/MIF experimental data, save data tables
 
 # %% hidden=true
@@ -2889,6 +2896,7 @@ def format_icf_mif_experimental_result(row):
     
     row['ntauE_avg'] = '{:0.1e}'.format(row['ntauE_avg'])
     row['ntauE_avg'] = latexutils.siunitx_num(row['ntauE_avg'])
+    
     row['Bibtex Strings'] = latexutils.cite(row['Bibtex Strings'])    
     return row
 
@@ -2917,7 +2925,7 @@ fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
 fh.write(icf_mif_table_latex)
 fh.close()
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Set peaking values for MCF 
 
 # %%
@@ -2971,7 +2979,7 @@ peaking_dict = {'Tokamak': {'peaking_temperature': tokamak_peaking_temperature,
                 #           'peaking_density': 2},
                }
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Make LaTeX table for peaking values
 
 # %%
@@ -3005,7 +3013,7 @@ with pd.option_context("max_colwidth", 1000):
 peaking_df
 
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Adjust, infer, and calculate MCF values
 
 # %%
@@ -3073,7 +3081,7 @@ def process_mcf_experimental_result(row):
 mcf_df = mcf_df.apply(process_mcf_experimental_result, axis=1)
 mcf_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Make LaTeX dataframe for MCF experimental data and create table file
 
 # %%
@@ -3215,18 +3223,16 @@ for table_dict in table_list:
     fh.close()
 
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Adjust MIF and ICF values so they can be combined with MCF data
 #
 
 # %%
 # Adjust and infer MIF and ICF values so they can be combined with MCF data
-#TODO justify this adjustment in the paper
-#for i, row in icf_mif_df.iterrows():
-#    icf_mif_df.loc[i, 'T_i_max'] = row['T_i_avg']
-#    icf_mif_df.loc[i, 'nTtauEstar_max'] = row['nTtauE']
 
 def adjust_icf_mif_result(row):
+    # These adjustments are called out in the paper
+    # TODO write down the page/paragraph here
     # Special exception for FIREX
     if row['Project Displayname'] == 'FIREX':
         row['T_i_max'] = row['T_e_avg']
@@ -3240,7 +3246,7 @@ def adjust_icf_mif_result(row):
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
 icf_mif_df
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ### Merge `mcf_df`, `mif_df` and `icf_df` so they can be plotted together
 
 # %%
@@ -3315,15 +3321,21 @@ concept_dict = {'Tokamak': {'color': red,
                                       'marker': 'p',
                                       'markersize': 70,
                                      },
-                'Laser ICF': {'color': black,
-                              'marker': 'x',
-                              'markersize': 70,
-                             }}
+                'Laser Indirect Drive': {'color': black,
+                                         'marker': 'x',
+                                         'markersize': 40,
+                                        },
+                'Laser Direct Drive': {'color': black,
+                                       'marker': '.',
+                                       'markersize': 70,
+                                      }
+                }
 
-concept_list = ['Tokamak', 'Laser ICF', 'Stellarator', 'MagLIF', 'Spherical Tokamak', 'Z Pinch', 'FRC', 'Spheromak', 'Mirror', 'RFP', 'Pinch'] 
+concept_list = concept_dict.keys()
+#concept_list = ['Tokamak', 'Laser Indirect Drive', 'Laser Indirect Drive', 'Stellarator', 'MagLIF', 'Spherical Tokamak', 'Z Pinch', 'FRC', 'Spheromak', 'Mirror', 'RFP', 'Pinch'] 
 
 point_size = 70       
-alpha = 0.5
+alpha = 1
 arrow_width = 0.9
 
 ntau_default_indicator = {'arrow': False,
@@ -3339,38 +3351,27 @@ mcf_ex2 = experiment.HighImpurityPeakedAndBroadDTExperiment()
 #q_type = 'fuel'
 q_type = 'sci'
 
-# MCF bands to display
-mcf_bands = [
-    {'Q': float('inf'),
-     'color': 'darkred',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = \infty$',
-     'alpha': alpha},
-    {'Q': 10,
-     'color': 'red',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 10$',
-     'alpha': alpha},
-    {'Q': 2,
-     'color': 'darkorange',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 2$',
-     'alpha': alpha},
-    {'Q': 1,
-     'color': 'green',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 1$',
-     'alpha': alpha},
-    {'Q': 0.1,
-     'color': 'blue',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.1$',
-     'alpha': 1/3},
-    {'Q': 0.01,
-     'color': 'blue',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.01$',
-     'alpha': 1/4},
-    {'Q': 0.001,
-     'color': 'blue',
-     'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = 0.001$',
-     'alpha': 1/5}
-]
 
+def Q_to_alpha(Q):
+    """This function translates a gain Q to a transparency level alpha
+    for the purposes of generated plots. The function and constants A and B
+    were developed by trial and error to come up with something which looks
+    reasonable to the eye.
+    """
+    A = 0.6
+    B = 0.3
+    alpha = 1 - (1 / (1 + (A * (Q**B))))
+    return alpha
+
+# MCF bands to display
+Q_list = {float('inf'), 10, 2, 1, 0.1, 0.01, 0.001}
+mcf_bands = []
+for Q in Q_list:
+    mcf_bands.append({'Q': Q,
+                      'color': 'red',
+                      'label': r'$Q_{\rm ' + q_type + r'}^{\rm MCF} = ' + str(Q) + r'$',
+                      'alpha': Q_to_alpha(Q),
+                     })
 
 icf_ex = experiment.IndirectDriveICFDTExperiment()
 
@@ -3630,23 +3631,23 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     
     # Right side annotations
     annotation_offset = 5
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e20), xycoords='data', alpha=1, color='darkred', rotation=0)
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e20), xycoords='data', alpha=1, color='red', rotation=0)
     horiz_line = mpl.patches.Rectangle((1.005, 0.83),
                                  width=0.06,
                                  height=0.002,
                                  transform=ax.transAxes,
-                                 color='darkred',
+                                 color='red',
                                  clip_on=False
                                 )
     ax.add_patch(horiz_line)
-    ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.1e20), xycoords='data', alpha=1, color='darkred', rotation=0)
+    ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.1e20), xycoords='data', alpha=1, color='red', rotation=0)
     ax.annotate(r'$10$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 1.8e20), xycoords='data', alpha=1, color='red', rotation=0)
-    ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e19), xycoords='data', alpha=1, color='darkorange', rotation=0)
-    ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4.6e19), xycoords='data', alpha=1, color='green', rotation=0)
-    ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='blue', rotation=0)
-    ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='blue', rotation=0)
-    ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='blue', rotation=0)
-    #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='blue', rotation=0)
+    ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e19), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4.6e19), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='red', rotation=0)
+    #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
     ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
@@ -3919,7 +3920,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     
     # Right side annotations
     annotation_offset = 5
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8e22), xycoords='data', alpha=1, color='darkred', rotation=0)
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8e22), xycoords='data', alpha=1, color='red', rotation=0)
     horiz_line = mpl.patches.Rectangle((1.005, 0.975),
                                  width=0.06,
                                  height=0.002,
@@ -3928,14 +3929,14 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                                  clip_on=False
                                 )
     ax.add_patch(horiz_line)
-    ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.2e22), xycoords='data', alpha=1, color='darkred', rotation=0)
+    ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.2e22), xycoords='data', alpha=1, color='red', rotation=0)
     ax.annotate(r'$10$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 1.8e22), xycoords='data', alpha=1, color='red', rotation=0)
-    ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e21), xycoords='data', alpha=1, color='darkorange', rotation=0)
-    ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4e21), xycoords='data', alpha=1, color='green', rotation=0)
-    ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e20), xycoords='data', alpha=1, color='blue', rotation=0)
-    ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e19), xycoords='data', alpha=1, color='blue', rotation=0)
-    ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e18), xycoords='data', alpha=1, color='blue', rotation=0)
-    #ax.annotate(r'$10^{-4}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e17), xycoords='data', alpha=1, color='blue', rotation=0)
+    ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e21), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4e21), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e20), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e19), xycoords='data', alpha=1, color='red', rotation=0)
+    ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e18), xycoords='data', alpha=1, color='red', rotation=0)
+    #ax.annotate(r'$10^{-4}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e17), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
     ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(1.9, 1.02e22), xycoords='data', alpha=1, color='black', rotation=-40)
@@ -4009,7 +4010,7 @@ indicators = {
                   'xoff': 0,
                   'yoff': -0.25},
     'NIF': {'arrow': True,
-               'xabs': 2015,
+               'xabs': 2017,
                'yabs': 4e22},
     'OMEGA': {'arrow': True,
               'xabs': 2003,
@@ -4121,11 +4122,11 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         mcf_patch_height = min_mcf_high_impurities - min_mcf_low_impurities
         mcf_patch = patches.Rectangle(xy=(mcf_horizontal_range_dict.get(mcf_band['Q'], [1950])[0],
                                           min_mcf_low_impurities),
-                                      width = mcf_horizontal_range_dict.get(mcf_band['Q'], [0, 100])[1], # width of line in years
-                                      height = mcf_patch_height,
-                                      linewidth=0,
-                                      facecolor=mcf_band['color'],
-                                      alpha=mcf_band['alpha'],
+                                          width = mcf_horizontal_range_dict.get(mcf_band['Q'], [0, 100])[1], # width of line in years
+                                          height = mcf_patch_height,
+                                          linewidth=0,
+                                          facecolor=mcf_band['color'],
+                                          alpha=mcf_band['alpha'],
                                      )
         ax.add_patch(mcf_patch)
         # Uncomment the below phantom line to display Q_MCF lines in legend
@@ -4153,7 +4154,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
               zorder=9
              )
-    
+
+    """
     ax.hlines(icf_ignition_10keV,
               xmin=2020,
               xmax=2027,
@@ -4164,13 +4166,14 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
               zorder=9
              )
-    
+    """
 
     # Scatterplot of data
     #d = mcf_mif_icf_df[mcf_mif_icf_df['is_concept_record'] == True]
+    # Make exception for N210808 since it achieved hot-spot ignition
     d = mcf_mif_icf_df[
     (mcf_mif_icf_df['is_concept_record'] == True) | 
-    (mcf_mif_icf_df['Shot'].isin(['N210808', 'N220919', 'N221204']))
+    (mcf_mif_icf_df['Shot'].isin(['N210808']))
     ]
     #for concept in d['Concept Displayname'].unique():
     for concept in concept_list:
@@ -4241,34 +4244,27 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.annotate(**annotation)
     
     # Label horizontal Q_sci^MCF lines
-    
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$', (mcf_horizontal_range_dict[float('inf')][0]+0.5, 1.22e22), alpha=1, color='darkred')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$' + '\n' + r'$@T_i=15 {\rm keV}$', (mcf_horizontal_range_dict[float('inf')][0]+0.5, 1.22e22), alpha=1, color='red')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=10$', (mcf_horizontal_range_dict[10][0]+0.5, 6.85e21), alpha=1, color='red')
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+0.5, 2.55e21), alpha=1, color='darkorange')
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+0.5, 1.45e21), alpha=1, color='green')
-    
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+0.5, 2.55e21), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+0.5, 1.45e21), alpha=1, color='red')
+
+    # Draw projection legend rectangle
     projection_rect = patches.Rectangle((1961, 1.5e12), 5, 2e12, edgecolor='white', facecolor='red', alpha=1, hatch='////', zorder=10)
     ax.add_patch(projection_rect)
     ax.annotate('Projections', xy=(1967, 1.7e12), xytext=(1967, 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
 
-    center_x, center_y = 1983, 2.1e12
-    width, height = 5, 1.2e12
-    ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
-    ax.add_patch(ellipse)
-    ax.annotate('Ignition', xy=(1987, 1.7e12), xytext=(1987, 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
-
     # Caveat Q_sci_^MCF
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$' + r'assumes $T_i=15 {\rm keV}$', (1960, 1e13), color='black', size=9)
+    #ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$' + r'assumes $T_i=15 {\rm keV}$', (1960, 1e22), color='red', size=9)
 
-    
     # Annotate NIF Ignition Shots
     # Define the ellipse parameters
-    center_x, center_y = 2022, 5e21
-    width, height = 5, 0.4e22  # Width and height in data coordinates
-    ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
-    ax.add_patch(ellipse)
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$T_i = 4{\rm keV}$', (2000, 1.1e22), alpha=1, color='black')
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
+    #center_x, center_y = 2022, 5e21
+    #width, height = 5, 0.4e22  # Width and height in data coordinates
+    #ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
+    #ax.add_patch(ellipse)
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (2002, 1.1e22), alpha=1, color='black')
+    #ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$@T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
 
     # Add watermark
     ax.annotate('Prepublication', (1960, 1.5e13), alpha=0.1, size=60, rotation=45)
@@ -4283,8 +4279,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.legend(ncol=2)
     
     plt.show()
-    #fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
-    
+    fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
+
 
 # %% [markdown]
 # ## Animation
