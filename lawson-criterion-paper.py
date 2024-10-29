@@ -17,7 +17,7 @@
 #
 # Samuel E. Wurzel, Scott C. Hsu
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Import python libraries, import fusionlib, setup Airtable credentials, configure LaTeX plotting
 
 # %%
@@ -80,7 +80,7 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
 # Naming for figures
 label_filename_dict = {
     ### Figures
-    #'fig:fusion_energy_trinity': 'fig_1.png', # Illustration
+    #'fig:E_f_trinity': 'fig_1.png', # Illustration
     'fig:scatterplot_ntauE_vs_T': 'fig_2.png',
     'fig:scatterplot_nTtauE_vs_year': 'fig_3.png',
     'fig:reactivities': 'fig_4.png',
@@ -151,7 +151,7 @@ if not os.path.exists('images'):
 
 print('Setup complete.')
 
-# %% [markdown]
+# %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Table of variable names
 
 # %%
@@ -649,7 +649,7 @@ fig.savefig(os.path.join('images', label_filename_dict['fig:Q_vs_T_extended']), 
 # %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## D-T reaction Lawson parameter and triple product for idealized MCF and ICF
 
-# %% [markdown] hidden=true
+# %% [markdown] hidden=true jp-MarkdownHeadingCollapsed=true
 # ### Idealized MCF and ICF: Calculate confinement parameter $n_e\tau_E$ vs $T$ for a range of $Q_{\rm fuel}$ and $Q_{\rm sci}$ for D-T
 
 # %% hidden=true
@@ -2668,14 +2668,24 @@ experimental_result_df['rhoR_tot'] = experimental_result_df['rhoR_tot'].astype(f
 experimental_result_df['YOC'] = experimental_result_df['YOC'].astype(float)
 experimental_result_df['p_stag'] = experimental_result_df['p_stag']
 experimental_result_df['tau_stag'] = experimental_result_df['tau_stag'].astype(float)
-experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
+
+experimental_result_df['E_ext'] = experimental_result_df['E_ext'].astype(float)
+experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
+experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
+experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
+
 experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
+
+# Use the date field if it exists, otherwise fall back to Jan 1 of the year indicated
+experimental_result_df['Date'] = pd.to_datetime(experimental_result_df['Date']).fillna(
+    pd.to_datetime(experimental_result_df['Year'].astype(str) + '-01-01')
+)
+
+experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
 
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged values
 mask = experimental_result_df['new_or_changed_2024_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
-
-print(experimental_result_df['Bibtex Strings'])
 
 # %% [markdown]
 # ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
@@ -2692,6 +2702,7 @@ mcf_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
     'Year': 'Year',
+    'Date': 'Date',
     'Shot': 'Shot identifier',
     'Bibtex Strings': 'Reference',
     'T_i_max': r'\thead{$T_{i0}$ \\ (\si{keV})}',
@@ -2705,6 +2716,10 @@ mcf_airtable_latex_map = {
     'Z_eff': r'$\thead{Z_{eff} \\ }$',
     'tau_E_star': r'\thead{$\tau_{E}^{*}$ \\ (\si{s})}',
     'tau_E': r'\thead{$\tau_{E}$ \\ (\si{s})}$',
+    'E_ext': r'\thead{$E_{\rm in}$ \\ (\si{J})}',
+    'E_F': r'\thead{$Y$ \\ (\si{J})}',
+    'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
+    'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
 }
 
 # Mapping from what's calculated in this code to what should be printed in latex tables
@@ -2726,6 +2741,7 @@ icf_mif_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
     'Year': 'Year',
+    'Date': 'Date',
     'Shot': 'Shot identifier',
     'Bibtex Strings': 'Reference',
     'T_i_avg': r'\thead{$\langle T_i \rangle_{\rm n}$ \\ (\si{keV})}',
@@ -2734,6 +2750,10 @@ icf_mif_airtable_latex_map = {
     'YOC': r'YOC',
     'p_stag': r'\thead{$p_{stag}$ \\ (\si{Gbar})}',
     'tau_stag': r'\thead{$\tau_{stag}$ \\ (\si{s})}',
+    'E_ext': r'\thead{$E_{\rm in}$ \\ (\si{J})}',
+    'E_F': r'\thead{$Y$ \\ (\si{J})}',
+    'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
+    'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
 }
 
 # Mapping from what's calculated in this code to what should be printed in latex tables
@@ -3163,6 +3183,7 @@ mcf_columns_to_display = [
     'Project Displayname',
     'Concept Displayname',
     'Year',
+    'Date',
     'Shot',
     'Bibtex Strings',
     'T_i_max',
@@ -3253,6 +3274,9 @@ icf_mif_df
 # Because merging fails with unhashable list object, we drop the Bibtex Strings column before merging
 icf_mif_df_no_bibtex = icf_mif_df.drop(columns=['Bibtex Strings'])
 mcf_df_no_bibtex = mcf_df.drop(columns=['Bibtex Strings'])
+
+icf_mif_df_no_bibtex['Date'] = pd.to_datetime(icf_mif_df_no_bibtex['Date'])
+mcf_df_no_bibtex['Date'] = pd.to_datetime(mcf_df_no_bibtex['Date'])
 
 mcf_mif_icf_df = mcf_df_no_bibtex.merge(icf_mif_df_no_bibtex, how='outer')
 
@@ -3374,6 +3398,116 @@ for Q in Q_list:
                      })
 
 icf_ex = experiment.IndirectDriveICFDTExperiment()
+
+# %% [markdown]
+# ## Scientific gain vs year achieved
+
+# %%
+from datetime import date
+# #%matplotlib widget
+#import mplcursors
+
+default_indicator = {'arrow': False,
+                     'xoff': 1,
+                     'yoff': 0}
+indicators = {
+    'NIF N210808': {'arrow': False,
+                    'xabs': date(2020, 1, 1),  # Create a proper date object
+                    'yabs': 1},
+    'OMEGA': {'arrow': True,
+              'xabs': date(2015, 1, 1),  # Convert all year values to date objects
+              'yabs': 0.1},
+    'TFTR': {'arrow': False,
+             'xabs': date(1993, 1, 1),
+             'yabs': 1},
+    'JET': {'arrow': False,
+             'xabs': date(1993, 1, 1),
+             'yabs': 2},
+}
+
+
+with plt.style.context('./styles/large.mplstyle', after_reset=True):
+
+    # Generate Figure    
+    fig, ax = plt.subplots(dpi=dpi)
+    fig.set_size_inches(figsize_fullpage)
+
+    # Set Range
+    ymin = 0
+    ymax = 3
+    ax.set_ylim(ymin, ymax)
+
+    ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
+    ax.set_yscale('linear')
+
+    # Label Title and Axes
+    #ax.set_title('Record Scientific Gain vs Year', size=16)
+    ax.set_xlabel(r'Year')
+    ax.set_ylabel(r'$Q_{\rm sci}$')
+    ax.grid(which='major')
+
+    d = mcf_mif_icf_df
+
+    # Scatterplot of data
+    # Check if both `E_F` and `P_F` are defined (non-null, non-zero) in any row
+    if ((d['E_F'].notna() & (d['E_F'] != 0)) & (d['P_F'].notna() & (d['P_F'] != 0))).any():
+        raise ValueError("Both E_F and P_F are defined for some rows. Only one should be defined per row.")
+
+    # Populate `Q_sci` based on `E_F / E_ext` or `P_F / P_ext`
+    d['Q_sci'] = np.where(d['E_F'].notna() & (d['E_F'] != 0), d['E_F'] / d['E_ext'],
+                      np.where(d['P_F'].notna() & (d['P_F'] != 0), d['P_F'] / d['P_ext'], np.nan))
+    
+    #for concept in d['Concept Displayname'].unique():
+    for concept in concept_list:
+        # Draw datapoints
+        concept_df = d[d['Concept Displayname']==concept]
+        scatter = ax.scatter(concept_df['Date'],
+                             concept_df['Q_sci'], 
+                             c = concept_dict[concept]['color'], 
+                             marker = concept_dict[concept]['marker'],
+                             zorder=10,
+                             s=point_size,
+                             label=concept,
+                            )
+    
+    for index, row in d.iterrows():
+        displayname = row['Project Displayname']
+        shot = row['Shot']
+        indicator = indicators.get(f'{displayname} {shot}', default_indicator)
+        y_value = row['Q_sci']
+        if np.isnan(y_value):
+            continue
+        annotation = {
+            'text': row['Project Displayname'] + ' ' + row['Shot'],
+            'xy': (row['Date'], y_value+0.05),
+        }
+        if indicator['arrow'] is True:
+            annotation['arrowprops'] = {'arrowstyle': '->'}
+            annotation['xytext'] = (indicator['xabs'], indicator['yabs'])
+            annotation['xy'] = (row['Date'], y_value)
+        elif 'xabs' in indicator:
+            annotation['xytext'] = (indicator['xabs'], indicator['yabs'])
+        elif 'yoff' in indicator:
+            # Annotate with relative placement
+            annotation['xytext'] = (row['Date'], 
+                                    y_value * (1 + indicator['yoff']))  # Modified relative y-offset
+        annotation['zorder'] = 10
+        ax.annotate(**annotation)
+    
+    # Add watermark
+    ax.annotate('Prepublication', (1990, 0.5), alpha=0.1, size=60, rotation=45)
+    
+    # Legend to the right
+    #plt.legend(bbox_to_anchor=(1, 1.015), ncol=1)
+    
+    # Legend below
+    #plt.legend(bbox_to_anchor=(1.01, -0.12), ncol=4)
+    
+    # Legend inside graph
+    plt.legend(ncol=2)
+    
+    plt.show()
+    fig.savefig(os.path.join('images', 'Qsci_vs_year.png'), bbox_inches='tight')
 
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
