@@ -2616,7 +2616,7 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:effect_of_bremsstrahlung_b']), bbox_inches='tight')
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## Calculate Lawson parameter, triple product, and p-tau minima
 
 # %% hidden=true
@@ -2694,7 +2694,7 @@ experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[
 #######################
 
 # MCF
-MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'RFP', 'Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'FRC']
+MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'RFP', 'Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'FRC', 'MTF']
 mcf_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(MCF_concepts)]
 
 # Mapping from data column headers to what should be printed in latex tables
@@ -2840,8 +2840,8 @@ def ptau_direct(p_stag_Gbar, tau_burn_s):
     ptau = p_stag_atm * tau_burn_s
     return ptau
     
-def icf_mcf_calculate(row):
-    """Calculate ptau and nTtau_E for ICF and MCF experiments.
+def icf_mif_calculate(row):
+    """Calculate ptau and nTtau_E for ICF and MIF experiments.
     
     The approach for calculating ptau varies. See paper for details.
     """
@@ -2878,7 +2878,7 @@ def icf_mcf_calculate(row):
         row['ntauE_avg'] = row['nTtauE_avg'] / float(row['T_i_avg'])
     return row
 
-icf_mif_df = icf_mif_df.apply(lambda row: icf_mcf_calculate(row), axis=1)
+icf_mif_df = icf_mif_df.apply(lambda row: icf_mif_calculate(row), axis=1)
 #icf_mif_df
 
 # %% [markdown] heading_collapsed=true
@@ -3329,6 +3329,10 @@ concept_dict = {'Tokamak': {'color': red,
                         'marker': 'd',
                         'markersize': 70,
                        },
+                'MTF': {'color': purple,
+                        'marker': 'o',
+                        'markersize': 70,
+                       },
                 'Spheromak': {'color': pink,
                               'marker': 's',
                               'markersize': 70,
@@ -3403,111 +3407,123 @@ icf_ex = experiment.IndirectDriveICFDTExperiment()
 # ## Scientific gain vs year achieved
 
 # %%
-from datetime import date
-# #%matplotlib widget
-#import mplcursors
+from datetime import date, timedelta
+from dataclasses import dataclass
+from typing import Optional, Dict, Union
+import numpy as np
+from matplotlib.dates import date2num, num2date
 
-default_indicator = {'arrow': False,
-                     'xoff': 1,
-                     'yoff': 0}
-indicators = {
-    'NIF N210808': {'arrow': False,
-                    'xabs': date(2020, 1, 1),  # Create a proper date object
-                    'yabs': 1},
-    'OMEGA': {'arrow': True,
-              'xabs': date(2015, 1, 1),  # Convert all year values to date objects
-              'yabs': 0.1},
-    'TFTR': {'arrow': False,
-             'xabs': date(1993, 1, 1),
-             'yabs': 1},
-    'JET': {'arrow': False,
-             'xabs': date(1993, 1, 1),
-             'yabs': 2},
+def get_text_bbox_size(fig, ax, text, rotation=90):
+    """Get the size of text bbox in data coordinates"""
+    renderer = fig.canvas.get_renderer()
+    bbox = text.get_window_extent(renderer)
+    bbox_data = bbox.transformed(ax.transData.inverted())
+    return bbox_data.width, bbox_data.height
+
+def plot_data_with_annotations(df: pd.DataFrame, concept_list: list, concept_dict: dict,
+                             fig_params: dict) -> None:
+    """Plot data points with annotations"""
+    with plt.style.context('./styles/large.mplstyle', after_reset=True):
+        # Setup figure
+        fig, ax = plt.subplots(dpi=fig_params['dpi'])
+        fig.set_size_inches(fig_params['figsize'])
+        
+        # Configure axes
+        ax.set_ylim(0, 3)
+        ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
+        ax.set_yscale('linear')
+        ax.set_xlabel(r'Year')
+        ax.set_ylabel(r'$Q_{\rm sci}$')
+        ax.grid(which='major')
+        
+        # Calculate Q_sci
+        df['Q_sci'] = np.where(
+            df['E_F'].notna() & (df['E_F'] != 0),
+            df['E_F'] / df['E_ext'],
+            np.where(df['P_F'].notna() & (df['P_F'] != 0),
+                    df['P_F'] / df['P_ext'],
+                    np.nan)
+        )
+        
+        # Set width to about 2 month in days
+        width = timedelta(days=60)
+        
+        # Plot bars for each concept
+        for concept in concept_list:
+            concept_df = df[df['Concept Displayname'] == concept]
+            valid_data = concept_df[concept_df['Q_sci'].notna()]
+            
+            if len(valid_data) > 0:
+                ax.bar(valid_data['Date'],
+                      valid_data['Q_sci'],
+                      width=width,
+                      color=concept_dict[concept]['color'],
+                      label=concept)
+        
+        # Group data points by year to handle overlaps
+        year_groups = {}
+        for _, row in df.iterrows():
+            if np.isnan(row['Q_sci']):
+                continue
+                
+            year = row['Date'].year
+            if year not in year_groups:
+                year_groups[year] = []
+            year_groups[year].append(row)
+        
+        # Add annotations with offset for overlapping years
+        for year, rows in year_groups.items():
+            if len(rows) == 1:
+                # Single annotation - place directly above
+                row = rows[0]
+                ax.annotate(
+                    f"{row['Project Displayname']} {row['Shot']}",
+                    xy=(row['Date'], row['Q_sci']),
+                    xytext=(row['Date'], row['Q_sci'] + 0.1),
+                    rotation=90,
+                    ha='left',
+                    va='bottom',
+                    fontsize=8
+                )
+            else:
+                # Multiple annotations - spread horizontally with arrows
+                for i, row in enumerate(rows):
+                    offset = (i - (len(rows)-1)/2) * timedelta(days=180)  # Spread labels
+                    ax.annotate(
+                        f"{row['Project Displayname']} {row['Shot']}",
+                        xy=(row['Date'], row['Q_sci']),  # Point to bar top
+                        xytext=(row['Date'] + offset, row['Q_sci'] + 0.15),  # Offset text
+                        rotation=90,
+                        ha='left',
+                        va='bottom',
+                        fontsize=8,
+                        arrowprops=dict(
+                            arrowstyle='->', 
+                            connectionstyle='arc3,rad=0',
+                            color='gray',
+                            lw=0.5
+                        )
+                    )
+        
+        # Add legend
+        ax.legend()
+        
+        plt.tight_layout()
+        fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
+# Usage
+fig_params = {
+    'dpi': dpi,
+    'figsize': figsize_fullpage,
+    'point_size': point_size
 }
 
+plot_data_with_annotations(mcf_mif_icf_df, concept_list, concept_dict, fig_params)
 
-with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
-    # Generate Figure    
-    fig, ax = plt.subplots(dpi=dpi)
-    fig.set_size_inches(figsize_fullpage)
 
-    # Set Range
-    ymin = 0
-    ymax = 3
-    ax.set_ylim(ymin, ymax)
+# %%
 
-    ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
-    ax.set_yscale('linear')
-
-    # Label Title and Axes
-    #ax.set_title('Record Scientific Gain vs Year', size=16)
-    ax.set_xlabel(r'Year')
-    ax.set_ylabel(r'$Q_{\rm sci}$')
-    ax.grid(which='major')
-
-    d = mcf_mif_icf_df
-
-    # Scatterplot of data
-    # Check if both `E_F` and `P_F` are defined (non-null, non-zero) in any row
-    if ((d['E_F'].notna() & (d['E_F'] != 0)) & (d['P_F'].notna() & (d['P_F'] != 0))).any():
-        raise ValueError("Both E_F and P_F are defined for some rows. Only one should be defined per row.")
-
-    # Populate `Q_sci` based on `E_F / E_ext` or `P_F / P_ext`
-    d['Q_sci'] = np.where(d['E_F'].notna() & (d['E_F'] != 0), d['E_F'] / d['E_ext'],
-                      np.where(d['P_F'].notna() & (d['P_F'] != 0), d['P_F'] / d['P_ext'], np.nan))
-    
-    #for concept in d['Concept Displayname'].unique():
-    for concept in concept_list:
-        # Draw datapoints
-        concept_df = d[d['Concept Displayname']==concept]
-        scatter = ax.scatter(concept_df['Date'],
-                             concept_df['Q_sci'], 
-                             c = concept_dict[concept]['color'], 
-                             marker = concept_dict[concept]['marker'],
-                             zorder=10,
-                             s=point_size,
-                             label=concept,
-                            )
-    
-    for index, row in d.iterrows():
-        displayname = row['Project Displayname']
-        shot = row['Shot']
-        indicator = indicators.get(f'{displayname} {shot}', default_indicator)
-        y_value = row['Q_sci']
-        if np.isnan(y_value):
-            continue
-        annotation = {
-            'text': row['Project Displayname'] + ' ' + row['Shot'],
-            'xy': (row['Date'], y_value+0.05),
-        }
-        if indicator['arrow'] is True:
-            annotation['arrowprops'] = {'arrowstyle': '->'}
-            annotation['xytext'] = (indicator['xabs'], indicator['yabs'])
-            annotation['xy'] = (row['Date'], y_value)
-        elif 'xabs' in indicator:
-            annotation['xytext'] = (indicator['xabs'], indicator['yabs'])
-        elif 'yoff' in indicator:
-            # Annotate with relative placement
-            annotation['xytext'] = (row['Date'], 
-                                    y_value * (1 + indicator['yoff']))  # Modified relative y-offset
-        annotation['zorder'] = 10
-        ax.annotate(**annotation)
-    
-    # Add watermark
-    ax.annotate('Prepublication', (1990, 0.5), alpha=0.1, size=60, rotation=45)
-    
-    # Legend to the right
-    #plt.legend(bbox_to_anchor=(1, 1.015), ncol=1)
-    
-    # Legend below
-    #plt.legend(bbox_to_anchor=(1.01, -0.12), ncol=4)
-    
-    # Legend inside graph
-    plt.legend(ncol=2)
-    
-    plt.show()
-    fig.savefig(os.path.join('images', 'Qsci_vs_year.png'), bbox_inches='tight')
+# %%
 
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
@@ -3515,138 +3531,137 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # %%
 ntauE_indicators = {
     'Alcator A': {'arrow': True,
-              'xoff': -0.65,
-              'yoff': 0},
+                  'xoff': -0.65,
+                  'yoff': 0},
     'Alcator C': {'arrow': True,
-             'xoff': -0.65,
-             'yoff': -0.2},
-    'SSPX': {'arrow': True,
-             'xoff': -0.033,
-             'yoff': 0.33},
-    'LHD': {'arrow': True,
-             'xabs': 0.2,
-             'yabs': 1e20,},
-    'LSX': {'arrow': True,
-             'xabs': 0.23,
-             'yabs': 0.9e17},
-    'W7-A': {'arrow': True,
-             'xoff': -0.4,
-             'yoff': -0.02},
-    'ST': {'arrow': True,
-             'xabs': 0.25,
-             'yabs': 2e17},
-    'Globus-M2': {'arrow': True,
-             'xabs': 0.2,
-             'yabs': 0.9e18},
-    'TFR': {'arrow': False,
-             'xoff': -0.23,
-             'yoff': -0.08},
+                  'xoff': -0.65,
+                  'yoff': -0.2},
+    'ASDEX': {'arrow': True,
+              'xoff': -0.55,
+              'yoff': 0},
+    'ASDEX-U': {'arrow': True,
+                'xoff': 0.05,
+                'yoff': -0.35},
     'C-2W': {'arrow': True,
              'xabs': 1.8,
              'yabs': 8e15},
     'C-Mod': {'arrow': True,
               'xabs': 3.7,
               'yabs': 2.0e19},
-    'EAST': {'arrow': True,
-              'xabs': 3.2,
-              'yabs': 3e18},
-    'ASDEX': {'arrow': True,
-              'xoff': -0.55,
-              'yoff': 0},
-    'ASDEX-U': {'arrow': True,
-              'xoff': 0.05,
-              'yoff': -0.35},
-
-    'JT-60U': {'arrow': True,
-             'xabs': 21,
-             'yabs': 6e19},
-    'TFTR': {'arrow': True,
-             'xabs': 40,
-             'yabs': 3e18},
-    'JET': {'arrow': True,
-            'xabs': 20,
-            'yabs': 3e18},
     'DIII-D': {'arrow': True,
                'xabs': 8,
                'yabs': 5e19},
-    'TFR': {'arrow': True,
-            'xabs': 0.4,
-            'yabs': 5e18},
-    'IPA': {'arrow': True,
-            'xabs': 1.5,
-            'yabs': 5e16},
-    'MST': {'arrow': True,
-            'xabs': 0.6,
-            'yabs':8e16},
-    'ITER': {'arrow': True,
-             'xabs': 14.5,
-             'yabs': 3.5e21},
-    'SPARC': {'arrow': True,
-             'xabs': 25,
-             'yabs': 1e21},
-    'NSTX': {'arrow': True,
-             'xoff': -0.25,
-             'yoff': 0.60},
-    'OMEGA': {'arrow': True,
-              'xabs': 1.6,
-              'yabs': 7e20},
-    'NIF': {'arrow': True,
-              'xabs': 6,
-              'yabs': 1e20},
-    'NOVA': {'arrow': True,
-              'xabs': 0.5,
-              'yabs': 2e20},
-    'RFX-mod': {'arrow': True,
-                'xabs': 4,
-                'yabs': 8e16},
-    'MagLIF': {'arrow': True,
-              'xabs': 1.3,
-              'yabs': 3.9e19},
+    'EAST': {'arrow': True,
+             'xabs': 3.2,
+             'yabs': 3e18},
+    'ETA-BETA II': {'arrow': True,
+                    'xabs': 0.015,
+                    'yabs': 3e16},
     'FIREX': {'arrow': True,
               'xabs': 0.75,
               'yabs': 3e20},
     'FRX-L': {'arrow': True,
               'xabs': 0.08,
               'yabs': 3e17},
-    'ETA-BETA II': {'arrow': True,
-              'xabs': 0.015,
-              'yabs': 3e16},
+    'FuZE': {'arrow': True,
+             'xabs': 3,
+             'yabs': 2.2e17},
     'GDT': {'arrow': True,
-              'xoff': -0.1,
-              'yoff': -0.4},
+            'xoff': -0.1,
+            'yoff': -0.4},
+    'Globus-M2': {'arrow': True,
+                  'xabs': 0.2,
+                  'yabs': 0.9e18},
+    'GOL-3': {'arrow': True,
+              'xabs': 3,
+              'yabs': 7e17},
+    'IPA': {'arrow': True,
+            'xabs': 1.5,
+            'yabs': 5e16},
+    'ITER': {'arrow': True,
+             'xabs': 14.5,
+             'yabs': 3.5e21},
+    'JET': {'arrow': True,
+            'xabs': 20,
+            'yabs': 3e18},
+    'JT-60U': {'arrow': True,
+               'xabs': 21,
+               'yabs': 6e19},
+    'KSTAR': {'arrow': True,
+              'xabs': 1.3,
+              'yabs': 9e18},
+    'LHD': {'arrow': True,
+            'xabs': 0.2,
+            'yabs': 1e20},
+    'LSX': {'arrow': True,
+            'xabs': 0.23,
+            'yabs': 0.9e17},
+    'MagLIF': {'arrow': True,
+               'xabs': 1.3,
+               'yabs': 3.9e19},
+    'MAST': {'arrow': True,
+             'xoff': 0.15,
+             'yoff': 0.},
+    'MST': {'arrow': True,
+            'xabs': 0.6,
+            'yabs': 8e16},
+    'NIF': {'arrow': True,
+            'xabs': 6,
+            'yabs': 1e20},
+    'NOVA': {'arrow': True,
+             'xabs': 0.5,
+             'yabs': 2e20},
+    'NSTX': {'arrow': True,
+             'xoff': -0.25,
+             'yoff': 0.60},
+    'OMEGA': {'arrow': True,
+              'xabs': 1.6,
+              'yabs': 7e20},
+    'PCS': {'arrow': True,
+            'xabs': 0.2,
+            'yabs': 3e18},
+    'PLT': {'arrow': True,
+            'xabs': 1.2,
+            'yabs': 5.5e18},
+    'RFX-mod': {'arrow': True,
+                'xabs': 4,
+                'yabs': 8e16},
+    'SPARC': {'arrow': True,
+              'xabs': 25,
+              'yabs': 1e21},
+    'SSPX': {'arrow': True,
+             'xoff': -0.033,
+             'yoff': 0.33},
+    'ST': {'arrow': True,
+           'xabs': 0.25,
+           'yabs': 2e17},
     'START': {'arrow': True,
               'xoff': -0.4,
               'yoff': 0.3},
-    'MAST': {'arrow': True,
-              'xoff': 0.15,
-              'yoff': 0.},
-    'GOL-3': {'arrow': True,
-             'xabs': 3,
-             'yabs': 7e17},
     'T-3': {'arrow': True,
-             'xoff': -0.3,
-             'yoff': 0.0},
-    'PLT': {'arrow': True,
-             'xabs': 1.2,
-             'yabs': 5.5e18},
-    'KSTAR': {'arrow': True,
-             'xabs': 1.3,
-             'yabs': 9e18},
+            'xoff': -0.3,
+            'yoff': 0.0},
+    'TFR': {'arrow': True,
+            'xabs': 0.4,
+            'yabs': 5e18},
+    'TFTR': {'arrow': True,
+             'xabs': 40,
+             'yabs': 3e18},
+    'W7-A': {'arrow': True,
+             'xoff': -0.5,
+             'yoff': -0.02},
     'W7-X': {'arrow': True,
              'xabs': 1.4,
              'yabs': 1.5e19},
     'Yingguang-I': {'arrow': True,
-             'xoff': -0.14,
-             'yoff': -0.55},
+                    'xoff': -0.14,
+                    'yoff': -0.55},
     'ZETA': {'arrow': True,
              'xabs': 0.03,
-             'yabs': 1e16,},
+             'yabs': 1e16},
     'ZT-40M': {'arrow': True,
                'xabs': 0.3,
-               'yabs': 3.2e16},
-    'FuZE': {'arrow': True,
-             'xabs': 3,
-             'yabs': 2.2e17},
+               'yabs': 3.2e16}
 }
 
 # Iignition ICF curve
@@ -3814,137 +3829,134 @@ default_indicator = {'arrow': False,
 
 nTtauE_indicators = {
     'Alcator A': {'arrow': True,
-             'xoff': -0.62,
-             'yoff': 0},
-    'ASDEX-U': {'arrow': True,
-              'xoff': 0.1,
-              'yoff': -0.35},
+                  'xoff': -0.62,
+                  'yoff': 0},
+    'Alcator C': {'arrow': True,
+                  'xoff': -0.51,
+                  'yoff': 0.3},
     'ASDEX': {'arrow': True,
               'xoff': -0.60,
               'yoff': -.1},
-    'SSPX': {'arrow': True,
-             'xoff': -0.8,
-             'yoff': 0.39},
-    'TFR': {'arrow': False,
-             'xoff': -0.23,
-             'yoff': -0.08},
+    'ASDEX-U': {'arrow': True,
+                'xoff': 0.1,
+                'yoff': -0.35},
+    'C-2W': {'arrow': True,
+             'xabs': 3,
+             'yabs': 1e16},
     'C-Mod': {'arrow': True,
               'xabs': 2.5,
               'yabs': 2.5e19},
-    'W7-X': {'arrow': True,
-             'xoff': 0.1,
-             'yoff': 0.25},
-    'JT-60U': {'arrow': True,
-             'xabs': 19,
-             'yabs': 1.55e21},
-    'TFTR': {'arrow': True,
-               'xabs': 50,
-               'yabs': 9e19},
-    'JET': {'arrow': True,
-            'xabs': 20,
-            'yabs': 0.5e20},
-    'LSX': {'arrow': True,
-            'xabs': 0.7,
-            'yabs': 1.2e17},
     'DIII-D': {'arrow': True,
                'xabs': 10,
                'yabs': 8e19},
-    'TFR': {'arrow': True,
-            'xabs': 0.3,
-            'yabs': 2e18},
-    'C-2W': {'arrow': True,
-            'xabs': 3,
-            'yabs': 1e16},
-    r'ITER': {'arrow': True,
-             'xabs': 15,
-             'yabs': 5e22},
-    r'SPARC': {'arrow': True,
-             'xabs': 25,
-             'yabs': 2e22},
-    'NSTX': {'arrow': True,
-             'xoff': -0.6,
-             'yoff': 0.4},
-    'OMEGA': {'arrow': True,
-              'xabs': 1.3,
-              'yabs': 2e21},
-    'Alcator C': {'arrow': True,
-             'xoff': -0.51,
-             'yoff': 0.3},
-    'NIF': {'arrow': True,
-              'xabs': 6.2,
-              'yabs': 6e20},
-    #'RFX-mod': {'arrow': True,
-    #            'xabs': 1.35,
-    #            'yabs': 1e17},
-    'FuZE': {'arrow': True,
+    'EAST': {'arrow': True,
              'xabs': 3,
-             'yabs': 4e17},
-    'MagLIF': {'arrow': True,
-              'xabs': 5,
-              'yabs': 2e20},
+             'yabs': 2e18},
+    'ETA-BETA I': {'arrow': True,
+                   'xoff': 0.08,
+                   'yoff': 0.3},
+    'ETA-BETA II': {'arrow': True,
+                    'xoff': -0.8,
+                    'yoff': -.1},
     'FIREX': {'arrow': True,
               'xabs': 1.1,
               'yabs': 5e19},
     'FRX-L': {'arrow': True,
               'xabs': 0.04,
               'yabs': 3.5e16},
-    'ETA-BETA II': {'arrow': True,
-              'xoff': -0.8,
-              'yoff': -.1},
+    'FuZE': {'arrow': True,
+             'xabs': 3,
+             'yabs': 4e17},
+    'GDT': {'arrow': True,
+            'xabs': 0.8,
+            'yabs': 1.7e15},
+    'Globus-M2': {'arrow': True,
+                  'xabs': 0.5,
+                  'yabs': 4e17},
+    'GOL-3': {'arrow': True,
+              'xabs': 3,
+              'yabs': 1e18},
+    'IPA': {'arrow': True,
+            'xabs': 0.45,
+            'yabs': 2.9e16},
+    'ITER': {'arrow': True,
+             'xabs': 15,
+             'yabs': 5e22},
+    'JET': {'arrow': True,
+            'xabs': 20,
+            'yabs': 0.5e20},
+    'JT-60U': {'arrow': True,
+               'xabs': 19,
+               'yabs': 1.55e21},
+    'KSTAR': {'arrow': True,
+              'xabs': 1,
+              'yabs': 2.3e19},
+    'LSX': {'arrow': True,
+            'xabs': 0.7,
+            'yabs': 1.2e17},
+    'MagLIF': {'arrow': True,
+               'xabs': 5,
+               'yabs': 2e20},
+    'MAST': {'arrow': True,
+             'xoff': 0.15,
+             'yoff': 0.06},
+    'MST': {'arrow': True,
+            'xabs': 0.2,
+            'yabs': 6e17},
+    'NIF': {'arrow': True,
+            'xabs': 6.2,
+            'yabs': 6e20},
+    'NOVA': {'arrow': True,
+             'xoff': -0.51,
+             'yoff': 0.17},
+    'NSTX': {'arrow': True,
+             'xoff': -0.6,
+             'yoff': 0.4},
+    'OMEGA': {'arrow': True,
+              'xabs': 1.3,
+              'yabs': 2e21},
+    'PCS': {'arrow': True,
+            'xabs': 0.2,
+            'yabs': 1.8e18},    
+    'PLT': {'arrow': True,
+            'xabs': 1,
+            'yabs': 9e18},
+    'SPARC': {'arrow': True,
+              'xabs': 25,
+              'yabs': 2e22},
+    'SSPX': {'arrow': True,
+             'xoff': -0.8,
+             'yoff': 0.39},
+    'ST': {'arrow': True,
+           'xoff': -0.4,
+           'yoff': 0.15},
     'START': {'arrow': True,
               'xoff': -0.4,
               'yoff': 0.36},
     'T-3': {'arrow': True,
-              'xoff': -0.4,
-              'yoff': -0.3},
-    'ST': {'arrow': True,
-           'xoff': -0.4,
-           'yoff': 0.15},
-    'MST': {'arrow': True,
-              'xabs': 0.2,
-              'yabs': 6e17},
-    'ETA-BETA I': {'arrow': True,
-              'xoff': 0.08,
-              'yoff': 0.3},
-    'GOL-3': {'arrow': True,
-             'xabs': 3,
-             'yabs': 1e18},
-    'W7-AS': {'arrow': True,
-             'xoff': 0.15,
-             'yoff': -0.06},
-    'MAST': {'arrow': True,
-             'xoff': 0.15,
-             'yoff': 0.06},
-    'NOVA': {'arrow': True,
-             'xoff': -0.51,
-             'yoff': 0.17},
-    'KSTAR': {'arrow': True,
-              'xabs': 1,
-              'yabs': 2.3e19},
-    'PLT': {'arrow': True,
-             'xabs': 1,
-             'yabs': 9e18},
-    'EAST': {'arrow': True,
-             'xabs': 3,
-             'yabs': 2e18},
-    'Globus-M2': {'arrow': True,
-                'xabs': 0.5,
-                'yabs': 4e17},
+            'xoff': -0.4,
+            'yoff': -0.3},
+    'TCSU': {'arrow': True,
+             'xoff': 0.08,
+             'yoff': -0.5},
+    'TFR': {'arrow': True,
+            'xabs': 0.3,
+            'yabs': 3e18},
+    'TFTR': {'arrow': True,
+             'xabs': 50,
+             'yabs': 9e19},
     'W7-A': {'arrow': True,
              'xoff': -0.45,
              'yoff': 0.1},
-    'TCSU': {'arrow': True,
-              'xoff': 0.08,
-              'yoff': -0.5},
-    'IPA': {'arrow': True,
-            'xabs': 0.45,
-            'yabs': 2.9e16},
-    'GDT': {'arrow': True,
-            'xabs': 0.8,
-            'yabs': 1.7e15},
+    'W7-AS': {'arrow': True,
+              'xoff': 0.15,
+              'yoff': -0.06},
+    'W7-X': {'arrow': True,
+             'xoff': 0.1,
+             'yoff': 0.25},
     'ZT-40M': {'arrow': True,
-            'xabs': 0.05,
-            'yabs': 7e16},
+               'xabs': 0.05,
+               'yabs': 7e16}
 }
 # This is needed for the correct ordering of the legend entries
 legend_handles = []
@@ -4125,69 +4137,12 @@ default_indicator = {'arrow': False,
                      'xoff': 1,
                      'yoff': 0}
 indicators = {
-    'W7-AS': {'arrow': False,
-              'xoff': -9,
-              'yoff': 0.1},
-    'W7-A': {'arrow': False,
-              'xoff': -3,
-              'yoff': -0.25},
     'Alcator A': {'arrow': False,
                   'xoff': 0,
                   'yoff': -0.3},
     'Alcator C': {'arrow': False,
                   'xoff': -12,
                   'yoff': 0},
-    'JET': {'arrow': False,
-                  'xoff': 0,
-                  'yoff': -0.25},
-    'JT-60U': {'arrow': False,
-                  'xoff': 0,
-                  'yoff': -0.25},
-    'NIF': {'arrow': True,
-               'xabs': 2017,
-               'yabs': 4e22},
-    'OMEGA': {'arrow': True,
-              'xabs': 2003,
-              'yabs': 9e19},
-    'NOVA': {'arrow': False,
-                  'xoff': 1,
-                  'yoff': -0.2},
-    'LHD': {'arrow': False,
-            'xoff': 0,
-            'yoff': -0.33},
-    'MAST': {'arrow': False,
-            'xoff': -5,
-            'yoff': 0.1},
-    'RFX-mod': {'arrow': True,
-               'xabs': 2016,
-               'yabs': 3e16},
-    'SSPX': {'arrow': True,
-               'xabs': 2005,
-               'yabs': 4e17},
-    'START': {'arrow': True,
-              'xabs': 1986,
-              'yabs': 3e16},
-    #'MST': {'arrow': True,
-    #           'xabs': 1985,
-    #           'yabs': 7e16},
-    'LSX': {'arrow': False,
-               'xoff': -1,
-               'yoff': 0.2},
-    'ZT-40M': {'arrow': False,
-               'xoff': -10,
-               'yoff': -.1},
-    'MagLIF': {'arrow': True,
-               'xabs': 2019,
-               'yabs': 1.5e20},
-    'CTX': {'arrow': False,
-               'xoff': 1,
-               'yoff': -0.1},
-    'ZaP': {'arrow': False,
-               'xoff': 1,
-               'yoff': -0.1},
-    'FuZE': {'arrow': True,
-               'xoff': 1,
-               'yoff': -0.5},
     'C-2U': {'arrow': True,
              'xabs': 2014,
              'yabs': 4e17},
@@ -4197,24 +4152,78 @@ indicators = {
     'C-Stellarator': {'arrow': True,
                       'xabs': 1963,
                       'yabs': 0.3e14},
+    'CTX': {'arrow': False,
+            'xoff': 1,
+            'yoff': -0.1},
     'ETA-BETA II': {'arrow': True,
                     'xabs': 1957,
                     'yabs': 2.5e15},
-    'W7-A': {'arrow': True,
-               'xoff': 1,
-               'yoff': -0.5},
+    'FuZE': {'arrow': True,
+             'xoff': 1,
+             'yoff': -0.5},
+    'JET': {'arrow': False,
+            'xoff': 0,
+            'yoff': -0.25},
+    'JT-60U': {'arrow': False,
+               'xoff': 0,
+               'yoff': -0.25},
+    'LHD': {'arrow': False,
+            'xoff': 0,
+            'yoff': -0.33},
+    'LSX': {'arrow': False,
+            'xoff': -1,
+            'yoff': 0.2},
+    'MagLIF': {'arrow': True,
+               'xabs': 2019,
+               'yabs': 1.5e20},
+    'MAST': {'arrow': False,
+             'xoff': -5,
+             'yoff': 0.1},
+    'MST': {'arrow': True,
+            'xabs': 2010,
+            'yabs': 1e16},
+    'NIF': {'arrow': True,
+            'xabs': 2017,
+            'yabs': 4e22},
+    'NOVA': {'arrow': False,
+             'xoff': 1,
+             'yoff': -0.2},
+    'NSTX': {'arrow': False,
+             'xoff': 0,
+             'yoff': 0.2},
+    'OMEGA': {'arrow': True,
+              'xabs': 2003,
+              'yabs': 9e19},
+    'PCS': {'arrow': False,
+              'xabs': 2017,
+              'yabs': 1.7e18},
+    'RFX-mod': {'arrow': True,
+                'xabs': 2016,
+                'yabs': 3e16},
+    'SSPX': {'arrow': True,
+             'xabs': 2005,
+             'yabs': 4e17},
+    'START': {'arrow': True,
+              'xabs': 1986,
+              'yabs': 3e16},
     'TFTR': {'arrow': False,
              'xoff': 1,
              'yoff': 0},
-    'MST': {'arrow': True,
-             'xabs': 2010,
-             'yabs': 1e16},
     'TMX-U': {'arrow': False,
-             'xabs': 1985,
-             'yabs': 2e14},
-    'NSTX': {'arrow': False,
-         'xoff': 0,
-         'yoff': 0.2},
+              'xabs': 1985,
+              'yabs': 2e14},
+    'W7-A': {'arrow': True,
+             'xoff': 1,
+             'yoff': -0.5},
+    'W7-AS': {'arrow': False,
+              'xoff': -9,
+              'yoff': 0.1},
+    'ZaP': {'arrow': False,
+            'xoff': 1,
+            'yoff': -0.1},
+    'ZT-40M': {'arrow': False,
+               'xoff': -10,
+               'yoff': -.1}
 }
 
 # mcf_horizontal_range_dict sets the horizontal location and width of the Q_sci^MCF lines.
@@ -4581,5 +4590,7 @@ frames[0].save('animation/lawson.gif', format='GIF',
                append_images=frames[1:],
                save_all=True,
                duration=300, loop=0)
+
+# %%
 
 # %%
