@@ -3480,7 +3480,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     
     # Add legend
     ax.legend()
-    
+    # Prepublication Watermark
+    ax.annotate('Prepublication', (date(1995, 1, 1), 0.5), alpha=0.1, size=60, rotation=45)
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 # Usage
