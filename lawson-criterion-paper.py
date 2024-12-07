@@ -2696,6 +2696,8 @@ for row in experimental_result_df.itertuples():
 mask = experimental_result_df['new_or_changed_2024_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
 
+print(f'Loaded {len(experimental_result_df)} experimental results.')
+
 # %% [markdown]
 # ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
 
@@ -2710,7 +2712,7 @@ mcf_experimental_result_df = experimental_result_df.loc[experimental_result_df['
 mcf_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
-    'Date': 'Date',
+    'Display Date': 'Date',
     'Shot': 'Shot identifier',
     'Bibtex Strings': 'Reference',
     'T_i_max': r'\thead{$T_{i0}$ \\ (\si{keV})}',
@@ -2736,8 +2738,10 @@ mcf_calculated_latex_map = {
     'nTtauEstar_max': r'\thead{$n_{i0} T_{i0} \tau_{E}^{*}$ \\ (\si{keV~m^{-3}~s})}',
 }
 
-# Only keep columns that are relevant to MCF
-mcf_df = mcf_experimental_result_df.filter(items=list(mcf_airtable_latex_map.keys()))
+# Only keep columns that are relevant to MCF. Also add the Date column since it's
+# not included in the airtable_latex_map.   
+mcf_keys = list(mcf_airtable_latex_map.keys()) + ['Date']
+mcf_df = mcf_experimental_result_df.filter(items=mcf_keys)
 
 #######################
 # ICF/MIF
@@ -2770,9 +2774,11 @@ icf_mif_calculated_latex_map = {
     'nTtauE_avg': r'\thead{$n \langle T \rangle_{\rm n} \tau$ \\ (\si{keV~m^{-3}~s})}',
 
 }
-
-icf_mif_df = icf_mif_experimental_result_df.filter(items=list(icf_mif_airtable_latex_map.keys()))
-
+# Only keep columns that are relevant to ICF/MIF. Also add the Date column since it's
+# not included in the airtable_latex_map.   
+icf_mif_keys = list(icf_mif_airtable_latex_map.keys()) + ['Date']
+icf_mif_df = icf_mif_experimental_result_df.filter(items=icf_mif_keys)
+icf_mif_df
 print(f'Split data into {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
 
 
@@ -2902,7 +2908,7 @@ header_keys = {**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map}.key
 # header values are the corresponding latex table headers
 header_values = {**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map}.values()
 # Set final order of columns in new table
-icf_mif_df = icf_mif_df[header_keys]
+latex_icf_mif_df = icf_mif_df[header_keys]
 
 def format_icf_mif_experimental_result(row):
     if not math.isnan(row['ptau']):
@@ -2934,7 +2940,7 @@ def format_icf_mif_experimental_result(row):
     return row
 
 # Format values
-latex_icf_mif_df = icf_mif_df.apply(lambda row: format_icf_mif_experimental_result(row), axis=1)
+latex_icf_mif_df = latex_icf_mif_df.apply(lambda row: format_icf_mif_experimental_result(row), axis=1)
 # Rename column headers
 latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map})    
 
@@ -3112,7 +3118,7 @@ def process_mcf_experimental_result(row):
     return row
 
 mcf_df = mcf_df.apply(process_mcf_experimental_result, axis=1)
-mcf_df
+#mcf_df
 
 # %% [markdown]
 # ### Make LaTeX dataframe for MCF experimental data and create table file
@@ -3195,7 +3201,7 @@ $\#$ Energy confinement time $\tau_E^*$ (TFTR/Lawson method) has been inferred f
 mcf_columns_to_display = [
     'Project Displayname',
     'Concept Displayname',
-    'Date',
+    'Display Date',
     'Shot',
     'Bibtex Strings',
     'T_i_max',
@@ -3277,7 +3283,8 @@ def adjust_icf_mif_result(row):
     return row
 
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
-icf_mif_df
+#icf_mif_df
+#mcf_df
 
 # %% [markdown]
 # ### Merge `mcf_df`, `mif_df` and `icf_df` so they can be plotted together
@@ -3295,7 +3302,7 @@ mcf_mif_icf_df = mcf_df_no_bibtex.merge(icf_mif_df_no_bibtex, how='outer')
 # Before plotting we convert all fields which are kept as strings (to maintain sigfigs for tables) to floats for plotting
 mcf_mif_icf_df['T_i_max'] = mcf_mif_icf_df['T_i_max'].astype(float)
 pd.set_option('display.max_rows', None)    # Show all rows
-mcf_mif_icf_df
+#mcf_mif_icf_df
 
 # %% [markdown]
 # ## Global Plotting Configuration
@@ -4069,14 +4076,14 @@ from datetime import datetime
 # Identify triple product results which are records for that particular concept
 def is_concept_record(row):
     # Don't directly show projected results
-    if row['Year'] > datetime.now().year:
+    if row['Date'].year > datetime.now().year:
         return False
     
     concept_displayname = row['Concept Displayname']
-    year = row['Year']
+    date = row['Date']
     nTtauEstar_max = row['nTtauEstar_max']
     matches = mcf_mif_icf_df.query("`Concept Displayname` == @concept_displayname & \
-                                    `Year` <= @year & \
+                                    `Date` <= @date & \
                                     `nTtauEstar_max` > @nTtauEstar_max"
                                  )
     if len(matches.index) == 0:
@@ -4085,7 +4092,7 @@ def is_concept_record(row):
         return False
     
 mcf_mif_icf_df['is_concept_record'] = mcf_mif_icf_df.apply(is_concept_record, axis=1)
-mcf_mif_icf_df.sort_values(by='Year', inplace=True)
+mcf_mif_icf_df.sort_values(by='Date', inplace=True)
 
 # %% [markdown]
 # ### Plot of Triple Product vs Year
@@ -4102,19 +4109,19 @@ indicators = {
                   'xoff': -12,
                   'yoff': 0},
     'C-2U': {'arrow': True,
-             'xabs': 2014,
+             'xabs': datetime(2014, 1, 1),
              'yabs': 4e17},
     'C-2W': {'arrow': True,
-             'xabs': 2025,
+             'xabs': datetime(2025, 1, 1),
              'yabs': 1.6e17},
     'C-Stellarator': {'arrow': True,
-                      'xabs': 1963,
+                      'xabs': datetime(1963, 1, 1),
                       'yabs': 0.3e14},
     'CTX': {'arrow': False,
             'xoff': 1,
             'yoff': -0.1},
     'ETA-BETA II': {'arrow': True,
-                    'xabs': 1957,
+                    'xabs': datetime(1957, 1, 1),
                     'yabs': 2.5e15},
     'FuZE': {'arrow': True,
              'xoff': 1,
@@ -4132,16 +4139,16 @@ indicators = {
             'xoff': -1,
             'yoff': 0.2},
     'MagLIF': {'arrow': True,
-               'xabs': 2019,
+               'xabs': datetime(2019, 1, 1),
                'yabs': 1.5e20},
     'MAST': {'arrow': False,
              'xoff': -5,
              'yoff': 0.1},
     'MST': {'arrow': True,
-            'xabs': 2010,
+            'xabs': datetime(2010, 1, 1),
             'yabs': 1e16},
     'NIF': {'arrow': True,
-            'xabs': 2017,
+            'xabs': datetime(2017, 1, 1),
             'yabs': 4e22},
     'NOVA': {'arrow': False,
              'xoff': 1,
@@ -4150,25 +4157,25 @@ indicators = {
              'xoff': 0,
              'yoff': 0.2},
     'OMEGA': {'arrow': True,
-              'xabs': 2003,
+              'xabs': datetime(2003, 1, 1),
               'yabs': 9e19},
     'PCS': {'arrow': False,
-              'xabs': 2017,
+              'xabs': datetime(2017, 1, 1),
               'yabs': 1.7e18},
     'RFX-mod': {'arrow': True,
-                'xabs': 2016,
+                'xabs': datetime(2016, 1, 1),
                 'yabs': 3e16},
     'SSPX': {'arrow': True,
-             'xabs': 2005,
+             'xabs': datetime(2005, 1, 1),
              'yabs': 4e17},
     'START': {'arrow': True,
-              'xabs': 1986,
+              'xabs': datetime(1986, 1, 1),
               'yabs': 3e16},
     'TFTR': {'arrow': False,
              'xoff': 1,
              'yoff': 0},
     'TMX-U': {'arrow': False,
-              'xabs': 1985,
+              'xabs': datetime(1985, 1, 1),
               'yabs': 2e14},
     'W7-A': {'arrow': True,
              'xoff': 1,
@@ -4186,10 +4193,10 @@ indicators = {
 
 # mcf_horizontal_range_dict sets the horizontal location and width of the Q_sci^MCF lines.
 # The keys are the values of Q_sci^MCF, the list in the values are [start year, length of line in years]
-mcf_horizontal_range_dict = {1: [1950, 100],
-                             2: [1961, 100],
-                             10: [1972, 100],
-                             float('inf'): [1985, 100],
+mcf_horizontal_range_dict = {1: [datetime(1950, 1, 1), timedelta(days=365*100)],
+                             2: [datetime(1961, 1, 1), timedelta(days=365*100)],
+                             10: [datetime(1972, 1, 1), timedelta(days=365*100)],
+                             float('inf'): [datetime(1985, 1, 1), timedelta(days=365*100)],
                             }
 
 with plt.style.context('./styles/large.mplstyle', after_reset=True):
@@ -4202,7 +4209,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ymin = 1e12
     ymax = 1e23
     ax.set_ylim(ymin, ymax)
-    ax.set_xlim(1950, 2045)
+    ax.set_xlim(datetime(1950, 1, 1), datetime(2045, 1, 1))
     ax.set_yscale('log')
 
     # Label Title and Axes
@@ -4221,9 +4228,9 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
         #min_mcf_high_impurities = DT_min_triple_product_df.loc[DT_min_triple_product_df['Q'] == 'peaked_and_broad_high_impurities Q={Q}'.format(Q=Q)].iloc[0]['minimum_triple_product'] 
         mcf_patch_height = min_mcf_high_impurities - min_mcf_low_impurities
-        mcf_patch = patches.Rectangle(xy=(mcf_horizontal_range_dict.get(mcf_band['Q'], [1950])[0],
+        mcf_patch = patches.Rectangle(xy=(mcf_horizontal_range_dict.get(mcf_band['Q'], [datetime(1950,1,1)])[0],
                                           min_mcf_low_impurities),
-                                          width = mcf_horizontal_range_dict.get(mcf_band['Q'], [0, 100])[1], # width of line in years
+                                          width = mcf_horizontal_range_dict.get(mcf_band['Q'], [0, timedelta(days=365*100)])[1], # width of line in years
                                           height = mcf_patch_height,
                                           linewidth=0,
                                           facecolor=mcf_band['color'],
@@ -4246,8 +4253,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                                 )
     
     ax.hlines(icf_ignition_4keV,
-              xmin=2000,
-              xmax=2050,
+              xmin=datetime(2000,1,1),
+              xmax=datetime(2050,1,1),
               color=icf_curve['color'],
               linewidth=2,
               linestyle=(0, icf_curve['dashes']),
@@ -4258,8 +4265,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
     """
     ax.hlines(icf_ignition_10keV,
-              xmin=2020,
-              xmax=2027,
+              xmin=datetime(2020,1,1),
+              xmax=datetime(2027,1,1),
               color=icf_curve['color'],
               linewidth=2,
               linestyle=(0, icf_curve['dashes']),
@@ -4280,7 +4287,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     for concept in concept_list:
         # Draw datapoints
         concept_df = d[d['Concept Displayname']==concept]
-        scatter = ax.scatter(concept_df['Year'], concept_df['nTtauEstar_max'], 
+        scatter = ax.scatter(concept_df['Date'], concept_df['nTtauEstar_max'], 
                              c = concept_dict[concept]['color'], 
                              marker = concept_dict[concept]['marker'],
                              zorder=10,
@@ -4288,7 +4295,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                              label=concept,
                             )
         # Draw lines between datapoints
-        plot = ax.plot(concept_df['Year'], concept_df['nTtauEstar_max'], 
+        plot = ax.plot(concept_df['Date'], concept_df['nTtauEstar_max'], 
                              c = concept_dict[concept]['color'], 
                              marker = concept_dict[concept]['marker'],
                              zorder=10,
@@ -4298,7 +4305,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             displayname = row['Project Displayname']
             indicator = indicators.get(displayname, default_indicator)
             annotation = {'text': row['Project Displayname'],
-                          'xy': (row['Year'], row['nTtauEstar_max']),
+                          'xy': (row['Date'], row['nTtauEstar_max']),
 
                          }
             if indicator['arrow'] is True:
@@ -4310,7 +4317,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                 annotation['xytext'] = (indicator['xabs'], indicator['yabs'])
             else:
                 # Annotate with relative placement
-                annotation['xytext'] = (indicator['xoff'] + row['Year'], 10**indicator['yoff'] * row['nTtauEstar_max'])
+                annotation['xytext'] = (row['Date'] + timedelta(days=365*indicator['xoff']), 10**indicator['yoff'] * row['nTtauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
 
@@ -4318,12 +4325,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     sparc_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'SPARC']['nTtauEstar_max'].iloc[0]
     # SPARC has rebaselined Q>1 to 2027
     sparc_minus_error = 4.1e21 # lower bound is at bottom of what's projected, Q_fuel = 2
-    sparc_rect = patches.Rectangle((2027, sparc_tp-sparc_minus_error), 5, sparc_minus_error, edgecolor='white', facecolor='red', alpha=1, hatch='////')
+    sparc_rect = patches.Rectangle((datetime(2027,1,1), sparc_tp-sparc_minus_error), timedelta(days=365*5), sparc_minus_error, edgecolor='white', facecolor='red', alpha=1, hatch='////')
 
     ax.add_patch(sparc_rect)
     annotation = {'text': 'SPARC',
-                  'xy': (2029.5, sparc_tp - 2e21),
-                  'xytext': (2024.5, 4e22),
+                  'xy': (datetime(2029,7,1), sparc_tp - 2e21),
+                  'xytext': (datetime(2024,7,1), 4e22),
                   'arrowprops': {'arrowstyle': '->'},
                   'zorder': 10,
                  }
@@ -4333,27 +4340,27 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     iter_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'ITER']['nTtauEstar_max'].iloc[0]
     iter_minus_error = 2.2e21 # lower bound is at bottom of what's projected, Q_fuel = 10
     # ITER has rebaselined D-T operations to 2039.
-    iter_rect = patches.Rectangle((2039, iter_tp - iter_minus_error), 5, iter_minus_error, 
+    iter_rect = patches.Rectangle((datetime(2039,1,1), iter_tp - iter_minus_error), timedelta(days=365*5), iter_minus_error, 
                                  edgecolor='white', facecolor='red', alpha=1, hatch='////', linewidth=1, zorder=2)
     ax.add_patch(iter_rect)
     annotation = {'text': 'ITER',
-                  'xy': (2041.5, iter_tp),
-                  'xytext': (2037, 4e22),
+                  'xy': (datetime(2041,7,1), iter_tp),
+                  'xytext': (datetime(2037,1,1), 4e22),
                   'arrowprops': {'arrowstyle': '->'},
                   'zorder': 10,
                  }
     ax.annotate(**annotation)
     
     # Label horizontal Q_sci^MCF lines
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$' + '\n' + r'$@T_i=15 {\rm keV}$', (mcf_horizontal_range_dict[float('inf')][0]+0.5, 1.22e22), alpha=1, color='red')
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=10$', (mcf_horizontal_range_dict[10][0]+0.5, 6.85e21), alpha=1, color='red')
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+0.5, 2.55e21), alpha=1, color='red')
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+0.5, 1.45e21), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$' + '\n' + r'$@T_i=15 {\rm keV}$', (mcf_horizontal_range_dict[float('inf')][0]+timedelta(days=365*0.5), 1.22e22), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=10$', (mcf_horizontal_range_dict[10][0]+timedelta(days=365*0.5), 6.85e21), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+timedelta(days=365*0.5), 2.55e21), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+timedelta(days=365*0.5), 1.45e21), alpha=1, color='red')
 
     # Draw projection legend rectangle
-    projection_rect = patches.Rectangle((1961, 1.5e12), 5, 2e12, edgecolor='white', facecolor='red', alpha=1, hatch='////', zorder=10)
+    projection_rect = patches.Rectangle((datetime(1961,1,1), 1.5e12), timedelta(days=365*5), 2e12, edgecolor='white', facecolor='red', alpha=1, hatch='////', zorder=10)
     ax.add_patch(projection_rect)
-    ax.annotate('Projections', xy=(1967, 1.7e12), xytext=(1967, 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
+    ax.annotate('Projections', xy=(datetime(1967,1,1), 1.7e12), xytext=(datetime(1967,1,1), 1.7e12), xycoords='data', alpha=1, color='black', size=10, zorder=10)
 
     # Caveat Q_sci_^MCF
     #ax.annotate(r'$Q_{\rm sci}^{\rm MCF}$' + r'assumes $T_i=15 {\rm keV}$', (1960, 1e22), color='red', size=9)
@@ -4364,11 +4371,11 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #width, height = 5, 0.4e22  # Width and height in data coordinates
     #ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
     #ax.add_patch(ellipse)
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (2002, 1.1e22), alpha=1, color='black')
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2002,1,1), 1.1e22), alpha=1, color='black')
     #ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$@T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
 
     # Add watermark
-    ax.annotate('Prepublication', (1960, 1.5e13), alpha=0.1, size=60, rotation=45)
+    ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
     
     # Legend to the right
     #plt.legend(bbox_to_anchor=(1, 1.015), ncol=1)
@@ -4387,10 +4394,10 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # ## Animation
 
 # %%
-year_list = [i for i in range(1956, 2040)]
-year_list = [2040] + year_list
-for year in year_list:
-    print(f'Running {year}...')
+date_list = [datetime(year, 1, 1) for year in range(1956, 2040)]
+date_list = [datetime(2040, 1, 1)] + date_list
+for date in date_list:
+    print(f'Running {date.year}...')
     with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
         fig, ax = plt.subplots(dpi=dpi)
         fig.set_size_inches(figsize_fullpage)
@@ -4449,7 +4456,7 @@ for year in year_list:
         for concept in concept_list:
             # Plot points for each concept
             #concept_df = mcf_mif_icf_df[mcf_mif_icf_df['Concept Displayname']==concept]
-            concept_df = mcf_mif_icf_df[(mcf_mif_icf_df['Concept Displayname']==concept) & (mcf_mif_icf_df['Year']<=year)] 
+            concept_df = mcf_mif_icf_df[(mcf_mif_icf_df['Concept Displayname']==concept) & (mcf_mif_icf_df['Date']<=date)] 
             if concept_dict[concept]['marker'] not in ['x', '2', '|', '_']:
                 edgecolor = 'white'
             else:
@@ -4519,8 +4526,8 @@ for year in year_list:
         # Inner annotations
         ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
     
-        ax.annotate(f'{year}', (10, 1.5e15), alpha=0.8, size=50)
-        if year > 2024:
+        ax.annotate(f'{date.year}', (10, 1.5e15), alpha=0.8, size=50)
+        if date.year > 2024:
             ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
             ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
@@ -4530,7 +4537,7 @@ for year in year_list:
         #leg.set_draggable(state=True)
         #fig.canvas.resizable = True
         #plt.show()
-        fig.savefig(os.path.join('animation', f'{year}_fig:scatterplot_ntauE_vs_T'), bbox_inches='tight')
+        fig.savefig(os.path.join('animation', f'{date.year}_fig:scatterplot_ntauE_vs_T'), bbox_inches='tight')
         fig.clear(True)
         plt.close(fig)    
 
@@ -4548,7 +4555,3 @@ frames[0].save('animation/lawson.gif', format='GIF',
                append_images=frames[1:],
                save_all=True,
                duration=300, loop=0)
-
-# %%
-
-# %%
