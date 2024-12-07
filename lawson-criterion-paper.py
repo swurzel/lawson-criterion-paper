@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
+#     custom_cell_magics: kql
+#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.2
+#       jupytext_version: 1.11.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -21,6 +24,7 @@
 # ## Import python libraries, import fusionlib, setup Airtable credentials, configure LaTeX plotting
 
 # %%
+
 import math
 import sys
 import os
@@ -2649,12 +2653,8 @@ DT_requirement_minimum_values_df
 filename = 'data/experimental_results.pkl'
 experimental_result_df = pd.read_pickle(filename)
 
-# Remove the below:
-# Copy the temperatures to a separate display column so the printed tables have correct number of signficant figures
-#experimental_result_df['T_e_avg'] = experimental_result_df['T_e_avg']
-#experimental_result_df['T_e_max'] = experimental_result_df['T_e_max']
-#experimental_result_df['T_i_avg'] = experimental_result_df['T_i_avg']
-#experimental_result_df['T_i_max'] = experimental_result_df['T_i_max']
+# Note the temperatures are stored as strings with the approprate
+# number of significant figures so no changes occur here.
 
 # Convert scientific notation strings to floats
 experimental_result_df['n_e_avg'] = experimental_result_df['n_e_avg'].astype(float)
@@ -2676,12 +2676,21 @@ experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
 experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
 
-# Use the date field if it exists, otherwise fall back to Jan 1 of the year indicated
+# DATE HANDLING
+# If the date field exists, clear the year field so we know to use the full date
+experimental_result_df['Year'] = experimental_result_df['Year'].mask(experimental_result_df['Date'].notna(), None)
+
+# Convert Date field to datetime, falling back to January 1st of Year field if Date is missing
 experimental_result_df['Date'] = pd.to_datetime(experimental_result_df['Date']).fillna(
-    pd.to_datetime(experimental_result_df['Year'].astype(str) + '-01-01')
+    pd.to_datetime(experimental_result_df[experimental_result_df['Year'].notna()]['Year'].astype(int).astype(str) + '-01-01')
 )
 
-experimental_result_df.sort_values(by=['Year', 'Shot'], inplace=True)
+# If the Year field is None, use the Date field. Otherwise use the Year field
+for row in experimental_result_df.itertuples():
+    if pd.isnull(row.Year):
+        experimental_result_df.at[row.Index, 'Display Date'] = row.Date.strftime('%Y-%m-%d')
+    else:
+        experimental_result_df.at[row.Index, 'Display Date'] = str(int(row.Year))
 
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged values
 mask = experimental_result_df['new_or_changed_2024_update'] == False
@@ -2701,7 +2710,6 @@ mcf_experimental_result_df = experimental_result_df.loc[experimental_result_df['
 mcf_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
-    'Year': 'Year',
     'Date': 'Date',
     'Shot': 'Shot identifier',
     'Bibtex Strings': 'Reference',
@@ -2740,8 +2748,7 @@ icf_mif_experimental_result_df = experimental_result_df.loc[experimental_result_
 icf_mif_airtable_latex_map = {
     'Project Displayname': 'Project',
     'Concept Displayname': 'Concept',
-    'Year': 'Year',
-    'Date': 'Date',
+    'Display Date': 'Date',
     'Shot': 'Shot identifier',
     'Bibtex Strings': 'Reference',
     'T_i_avg': r'\thead{$\langle T_i \rangle_{\rm n}$ \\ (\si{keV})}',
@@ -2752,8 +2759,8 @@ icf_mif_airtable_latex_map = {
     'tau_stag': r'\thead{$\tau_{stag}$ \\ (\si{s})}',
     'E_ext': r'\thead{$E_{\rm in}$ \\ (\si{J})}',
     'E_F': r'\thead{$Y$ \\ (\si{J})}',
-    'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
-    'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
+    #'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
+    #'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
 }
 
 # Mapping from what's calculated in this code to what should be printed in latex tables
@@ -2894,7 +2901,6 @@ icf_mif_df = icf_mif_df.apply(lambda row: icf_mif_calculate(row), axis=1)
 header_keys = {**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map}.keys()
 # header values are the corresponding latex table headers
 header_values = {**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map}.values()
-
 # Set final order of columns in new table
 icf_mif_df = icf_mif_df[header_keys]
 
@@ -2908,7 +2914,14 @@ def format_icf_mif_experimental_result(row):
 
     if not math.isnan(row['YOC']):
         row['YOC'] = '{:.1f}'.format(row['YOC'])
-        
+
+    if not math.isnan(row['E_ext']):
+        row['E_ext'] = '{:.1e}'.format(row['E_ext'])
+        row['E_ext'] = latexutils.siunitx_num(row['E_ext'])
+    if not math.isnan(row['E_F']):
+        row['E_F'] = '{:.1e}'.format(row['E_F'])
+        row['E_F'] = latexutils.siunitx_num(row['E_F'])
+
     row['tau_stag'] = latexutils.siunitx_num(row['tau_stag'])
     
     row['nTtauE_avg'] = '{:0.1e}'.format(row['nTtauE_avg'])
@@ -2916,7 +2929,7 @@ def format_icf_mif_experimental_result(row):
     
     row['ntauE_avg'] = '{:0.1e}'.format(row['ntauE_avg'])
     row['ntauE_avg'] = latexutils.siunitx_num(row['ntauE_avg'])
-    
+      
     row['Bibtex Strings'] = latexutils.cite(row['Bibtex Strings'])    
     return row
 
@@ -3182,7 +3195,6 @@ $\#$ Energy confinement time $\tau_E^*$ (TFTR/Lawson method) has been inferred f
 mcf_columns_to_display = [
     'Project Displayname',
     'Concept Displayname',
-    'Year',
     'Date',
     'Shot',
     'Bibtex Strings',
@@ -3353,7 +3365,7 @@ concept_dict = {'Tokamak': {'color': red,
                                          'marker': 'x',
                                          'markersize': 40,
                                         },
-                'Laser Direct Drive': {'color': black,
+                'Laser Direct Drive': {'color': grey,
                                        'marker': '.',
                                        'markersize': 70,
                                       }
@@ -3408,122 +3420,68 @@ icf_ex = experiment.IndirectDriveICFDTExperiment()
 
 # %%
 from datetime import date, timedelta
-from dataclasses import dataclass
-from typing import Optional, Dict, Union
-import numpy as np
 from matplotlib.dates import date2num, num2date
 
-def get_text_bbox_size(fig, ax, text, rotation=90):
-    """Get the size of text bbox in data coordinates"""
-    renderer = fig.canvas.get_renderer()
-    bbox = text.get_window_extent(renderer)
-    bbox_data = bbox.transformed(ax.transData.inverted())
-    return bbox_data.width, bbox_data.height
-
-def plot_data_with_annotations(df: pd.DataFrame, concept_list: list, concept_dict: dict,
-                             fig_params: dict) -> None:
-    """Plot data points with annotations"""
-    with plt.style.context('./styles/large.mplstyle', after_reset=True):
-        # Setup figure
-        fig, ax = plt.subplots(dpi=fig_params['dpi'])
-        fig.set_size_inches(fig_params['figsize'])
+with plt.style.context('./styles/large.mplstyle', after_reset=True):
+    # Setup figure
+    fig, ax = plt.subplots(dpi=dpi)
+    fig.set_size_inches(figsize_fullpage)
+    
+    # Configure axes
+    ax.set_ylim(0, 3)
+    ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
+    ax.set_yscale('linear')
+    ax.set_xlabel(r'Year')
+    ax.set_ylabel(r'$Q_{\rm sci}$')
+    ax.grid(which='major')
+    # rename df for convenience
+    df = mcf_mif_icf_df 
+    # Calculate Q_sci
+    df['Q_sci'] = np.where(
+        df['E_F'].notna() & (df['E_F'] != 0),
+        df['E_F'] / df['E_ext'],
+        np.where(df['P_F'].notna() & (df['P_F'] != 0),
+                df['P_F'] / df['P_ext'],
+                np.nan)
+    )
         
-        # Configure axes
-        ax.set_ylim(0, 3)
-        ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
-        ax.set_yscale('linear')
-        ax.set_xlabel(r'Year')
-        ax.set_ylabel(r'$Q_{\rm sci}$')
-        ax.grid(which='major')
+    # Set width to about 2 month in days
+    width = timedelta(days=60)
+    
+    # Plot bars for each concept
+    for concept in concept_list:
+        concept_df = df[df['Concept Displayname'] == concept]
+        valid_data = concept_df[concept_df['Q_sci'].notna()]
         
-        # Calculate Q_sci
-        df['Q_sci'] = np.where(
-            df['E_F'].notna() & (df['E_F'] != 0),
-            df['E_F'] / df['E_ext'],
-            np.where(df['P_F'].notna() & (df['P_F'] != 0),
-                    df['P_F'] / df['P_ext'],
-                    np.nan)
-        )
-        
-        # Set width to about 2 month in days
-        width = timedelta(days=60)
-        
-        # Plot bars for each concept
-        for concept in concept_list:
-            concept_df = df[df['Concept Displayname'] == concept]
-            valid_data = concept_df[concept_df['Q_sci'].notna()]
-            
-            if len(valid_data) > 0:
-                ax.bar(valid_data['Date'],
-                      valid_data['Q_sci'],
-                      width=width,
-                      color=concept_dict[concept]['color'],
-                      label=concept)
-        
-        # Group data points by year to handle overlaps
-        year_groups = {}
-        for _, row in df.iterrows():
-            if np.isnan(row['Q_sci']):
-                continue
-                
-            year = row['Date'].year
-            if year not in year_groups:
-                year_groups[year] = []
-            year_groups[year].append(row)
-        
-        # Add annotations with offset for overlapping years
-        for year, rows in year_groups.items():
-            if len(rows) == 1:
-                # Single annotation - place directly above
-                row = rows[0]
+        if len(valid_data) > 0:
+            ax.bar(valid_data['Date'],
+                    valid_data['Q_sci'],
+                    width=width,
+                    color=concept_dict[concept]['color'],
+                    label=concept)
+            for index, row in valid_data.iterrows():
                 ax.annotate(
-                    f"{row['Project Displayname']} {row['Shot']}",
+                    f"{row['Project Displayname']}",
+                    #f"{row['Project Displayname']} {row['Shot']}",
                     xy=(row['Date'], row['Q_sci']),
                     xytext=(row['Date'], row['Q_sci'] + 0.1),
                     rotation=90,
                     ha='left',
                     va='bottom',
-                    fontsize=8
-                )
-            else:
-                # Multiple annotations - spread horizontally with arrows
-                for i, row in enumerate(rows):
-                    offset = (i - (len(rows)-1)/2) * timedelta(days=180)  # Spread labels
-                    ax.annotate(
-                        f"{row['Project Displayname']} {row['Shot']}",
-                        xy=(row['Date'], row['Q_sci']),  # Point to bar top
-                        xytext=(row['Date'] + offset, row['Q_sci'] + 0.15),  # Offset text
-                        rotation=90,
-                        ha='left',
-                        va='bottom',
-                        fontsize=8,
-                        arrowprops=dict(
-                            arrowstyle='->', 
-                            connectionstyle='arc3,rad=0',
-                            color='gray',
-                            lw=0.5
-                        )
-                    )
-        
-        # Add legend
-        ax.legend()
-        
-        plt.tight_layout()
-        fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
+                fontsize=8
+            )
+    
+    # Add legend
+    ax.legend()
+    
+    plt.tight_layout()
+    fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 # Usage
 fig_params = {
     'dpi': dpi,
     'figsize': figsize_fullpage,
     'point_size': point_size
 }
-
-plot_data_with_annotations(mcf_mif_icf_df, concept_list, concept_dict, fig_params)
-
-
-
-# %%
-
-# %%
 
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
