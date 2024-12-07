@@ -2674,7 +2674,11 @@ experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
 experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
 experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
+# Set boolean for whether the 2024 update changed the value
+experimental_result_df['include_lawson_plots'] = experimental_result_df['include_lawson_plots'].notna()
+experimental_result_df['include_Qsci_vs_date_plot'] = experimental_result_df['include_Qsci_vs_date_plot'].notna()
 experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
+
 
 # DATE HANDLING
 # If the date field exists, clear the year field so we know to use the full date
@@ -2692,21 +2696,45 @@ for row in experimental_result_df.itertuples():
     else:
         experimental_result_df.at[row.Index, 'Display Date'] = str(int(row.Year))
 
-# For updated paper, to keep the references short, refer to our 2022 paper for unchanged values
+# For updated paper, to keep the references short, refer to our 2022 paper for unchanged data
 mask = experimental_result_df['new_or_changed_2024_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
 
 print(f'Loaded {len(experimental_result_df)} experimental results.')
 
 # %% [markdown]
-# ### Split experimental results into separate MCF and MIF/ICF dataframes, define headers for dataframe and latex tables. 
+# ### Split experimental results into separate Q_sci, MCF, and MIF/ICF dataframes, define headers for dataframe and latex tables. 
 
 # %%
 #######################
+# Q_sci
+Q_sci_experimental_result_df = experimental_result_df.loc[experimental_result_df['include_Qsci_vs_date_plot']]
+q_sci_airtable_latex_map = {
+    'Project Displayname': 'Project',
+    'Concept Displayname': 'Concept',
+    'Display Date': 'Date',
+    'Shot': 'Shot identifier',
+    'Bibtex Strings': 'Reference',
+    'E_ext': r'\thead{$E_{\rm in}$ \\ (\si{J})}',
+    'E_F': r'\thead{$Y$ \\ (\si{J})}',
+    'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
+    'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
+}
 
+q_sci_calculated_latex_map = {
+    'Q_sci': r'\thead{$Q_{\rm sci}$ \\ }',
+}
+
+q_sci_keys = list(q_sci_airtable_latex_map.keys()) + ['Date']
+q_sci_df = Q_sci_experimental_result_df.filter(items=q_sci_keys)
+
+#######################
 # MCF
 MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'RFP', 'Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'FRC', 'MTF']
-mcf_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(MCF_concepts)]
+mcf_experimental_result_df = experimental_result_df.loc[
+    (experimental_result_df['Concept Displayname'].isin(MCF_concepts)) & 
+    (experimental_result_df['include_lawson_plots'] == True)
+]
 
 # Mapping from data column headers to what should be printed in latex tables
 mcf_airtable_latex_map = {
@@ -2726,10 +2754,6 @@ mcf_airtable_latex_map = {
     'Z_eff': r'$\thead{Z_{eff} \\ }$',
     'tau_E_star': r'\thead{$\tau_{E}^{*}$ \\ (\si{s})}',
     'tau_E': r'\thead{$\tau_{E}$ \\ (\si{s})}$',
-    'E_ext': r'\thead{$E_{\rm in}$ \\ (\si{J})}',
-    'E_F': r'\thead{$Y$ \\ (\si{J})}',
-    'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
-    'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
 }
 
 # Mapping from what's calculated in this code to what should be printed in latex tables
@@ -2739,14 +2763,17 @@ mcf_calculated_latex_map = {
 }
 
 # Only keep columns that are relevant to MCF. Also add the Date column since it's
-# not included in the airtable_latex_map.   
+# not included in the airtable_latex_map but is needed for plots.   
 mcf_keys = list(mcf_airtable_latex_map.keys()) + ['Date']
 mcf_df = mcf_experimental_result_df.filter(items=mcf_keys)
 
 #######################
 # ICF/MIF
 ICF_MIF_concepts = ['Laser Direct Drive', 'Laser Indirect Drive', 'MagLIF']
-icf_mif_experimental_result_df = experimental_result_df.loc[experimental_result_df['Concept Displayname'].isin(ICF_MIF_concepts)]
+icf_mif_experimental_result_df = experimental_result_df.loc[
+    (experimental_result_df['Concept Displayname'].isin(ICF_MIF_concepts)) & 
+    (experimental_result_df['include_lawson_plots'] == True)
+]
 
 # Mapping from data column headers to what should be printed in latex tables
 icf_mif_airtable_latex_map = {
@@ -2779,7 +2806,18 @@ icf_mif_calculated_latex_map = {
 icf_mif_keys = list(icf_mif_airtable_latex_map.keys()) + ['Date']
 icf_mif_df = icf_mif_experimental_result_df.filter(items=icf_mif_keys)
 icf_mif_df
-print(f'Split data into {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
+print(f'Split data into {len(q_sci_df)} Q_sci experimental results, {len(mcf_df)} MCF experimental results and {len(icf_mif_df)} MIF/ICF results.')
+
+# %% [markdown]
+# ### Calculate Q_sci values
+
+# %%
+# Q_sci is calculated from E_ext and E_F or P_ext and P_F
+# Calculate Q_sci using either energy or power ratios
+q_sci_df['Q_sci'] = q_sci_df['E_F'] / q_sci_df['E_ext']  # try energy first
+mask = q_sci_df['Q_sci'].isna()  # where energy calculation failed
+q_sci_df.loc[mask, 'Q_sci'] = q_sci_df.loc[mask, 'P_F'] / q_sci_df.loc[mask, 'P_ext']  # try power instead
+q_sci_df
 
 
 # %% [markdown] heading_collapsed=true
@@ -3442,15 +3480,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$Q_{\rm sci}$')
     ax.grid(which='major')
     # rename df for convenience
-    df = mcf_mif_icf_df 
-    # Calculate Q_sci
-    df['Q_sci'] = np.where(
-        df['E_F'].notna() & (df['E_F'] != 0),
-        df['E_F'] / df['E_ext'],
-        np.where(df['P_F'].notna() & (df['P_F'] != 0),
-                df['P_F'] / df['P_ext'],
-                np.nan)
-    )
+    df = q_sci_df
         
     # Set width to about 2 month in days
     width = timedelta(days=60)
