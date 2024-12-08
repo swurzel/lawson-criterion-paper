@@ -137,6 +137,7 @@ label_filename_dict = {
     'tab:mainstream_mcf_data_table': 'table_6.tex',
     'tab:alternates_mcf_data_table': 'table_7.tex',
     'tab:icf_mif_data_table': 'table_8.tex',
+    'tab:q_sci_data_table': 'table_9.tex',
 }
 
 # Initialize configparser
@@ -2818,6 +2819,64 @@ q_sci_df['Q_sci'] = q_sci_df['E_F'] / q_sci_df['E_ext']  # try energy first
 mask = q_sci_df['Q_sci'].isna()  # where energy calculation failed
 q_sci_df.loc[mask, 'Q_sci'] = q_sci_df.loc[mask, 'P_F'] / q_sci_df.loc[mask, 'P_ext']  # try power instead
 q_sci_df
+
+# %% [markdown]
+# ### Make LaTeX dataframe for Q_sci experimental data, save data tables
+
+# %%
+# Note we are relying on ordered dictionaries here so the headers keys (dataframe headers)
+# line up correctly with the table header values (latex headers)
+# Ordered dictionaries are a feature of Python 3.7+ See this link for more info:
+# https://stackoverflow.com/questions/39980323/are-dictionaries-ordered-in-python-3-6
+
+# header keys are the dataframe headers
+header_keys = {**q_sci_airtable_latex_map, **q_sci_calculated_latex_map}.keys()
+# Set final order of columns in new table
+latex_q_sci_df = q_sci_df[header_keys]
+
+def format_q_sci_experimental_result(row):
+    if not math.isnan(row['E_ext']):
+        row['E_ext'] = '{:.1e}'.format(row['E_ext'])
+        row['E_ext'] = latexutils.siunitx_num(row['E_ext'])
+    if not math.isnan(row['E_F']):
+        row['E_F'] = '{:.1e}'.format(row['E_F'])
+        row['E_F'] = latexutils.siunitx_num(row['E_F'])
+    if not math.isnan(row['P_ext']):
+        row['P_ext'] = '{:.1e}'.format(row['P_ext'])
+        row['P_ext'] = latexutils.siunitx_num(row['P_ext'])
+    if not math.isnan(row['P_F']):
+        row['P_F'] = '{:.1e}'.format(row['P_F'])
+        row['P_F'] = latexutils.siunitx_num(row['P_F'])
+
+    row['Q_sci'] = '{:.2f}'.format(row['Q_sci'])
+    
+    row['Bibtex Strings'] = latexutils.cite(row['Bibtex Strings'])    
+    return row
+
+# Format values
+latex_q_sci_df = latex_q_sci_df.apply(lambda row: format_q_sci_experimental_result(row), axis=1)
+# Rename column headers
+latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_sci_calculated_latex_map})    
+
+caption = "Data for experiments which produced sufficient fusion energy to achive non-negligible values of scientific gain $Q_{\mathrm{sci}}$."
+label = "tab:q_sci_data_table"
+
+q_sci_table_latex = latex_q_sci_df.to_latex(
+                         caption=caption,
+                         label=label,
+                         escape=False,
+                         na_rep=latexutils.table_placeholder,
+                         index=False,
+                         formatters={},
+                      )
+# Post processing of latex code to display as desired
+q_sci_table_latex = latexutils.JFE_comply(q_sci_table_latex)
+q_sci_table_latex = latexutils.full_width_table(q_sci_table_latex)
+q_sci_table_latex = latexutils.sideways_table(q_sci_table_latex)
+
+fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh.write(q_sci_table_latex)
+fh.close()
 
 
 # %% [markdown] heading_collapsed=true
