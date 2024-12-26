@@ -3526,6 +3526,59 @@ icf_ex = experiment.IndirectDriveICFDTExperiment()
 from datetime import date, timedelta
 from matplotlib.dates import date2num, num2date
 
+annotation_text_size = 11
+
+class BraceAnnotation:
+    def __init__(self, ax, text, x_date, y_pos, text_size=annotation_text_size, x_offset_days=230, y_offset=0.09, brace_size=20):
+        """
+        Create a brace annotation with accompanying text label.
+        
+        Parameters:
+        -----------
+        text : str
+            The text label to display
+        x_date : datetime.date
+            The date position for the brace
+        y_pos : float
+            The y-coordinate position
+        ax : matplotlib.axes.Axes
+            The axes to draw on
+        text_size : int, optional
+            Font size for the text label
+        x_offset_days : int, optional
+            Number of days to offset the text label from the brace
+        brace_width : float, optional
+            Factor to scale the brace width
+        """
+        self.brace = {
+            'text': '{',
+            'rotation': 270,
+            'xy': (x_date, y_pos),
+            'xytext': (x_date, y_pos),
+            'xycoords': 'data',
+            'textcoords': 'data',
+            'size': brace_size,
+            'color': 'black',
+            'transform': ax.get_xaxis_transform()
+        }
+        
+        self.label = {
+            'text': text,
+            'xy': self.brace['xy'],
+            'xytext': (date.fromordinal(date.toordinal(x_date) + x_offset_days), y_pos + y_offset),
+            'xycoords': self.brace['xycoords'],
+            'textcoords': self.brace['textcoords'],
+            'size': text_size,
+            'rotation': 90,
+            'color': 'black'
+        }
+        
+        # Add the annotations to the plot
+        ax.annotate(**self.brace)
+        ax.annotate(**self.label)
+
+
+
 with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Setup figure
     fig, ax = plt.subplots(dpi=dpi)
@@ -3538,35 +3591,63 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_xlabel(r'Year')
     ax.set_ylabel(r'$Q_{\rm sci}$')
     ax.grid(which='major')
-    # rename df for convenience
-    df = q_sci_df
         
     # Set width to about 2 month in days
     width = timedelta(days=60)
     
-    # Plot bars for each concept
+    # Plot bars by concept
     for concept in concept_list:
-        concept_df = df[df['Concept Displayname'] == concept]
-        valid_data = concept_df[concept_df['Q_sci'].notna()]
-        
-        if len(valid_data) > 0:
-            ax.bar(valid_data['Date'],
-                    valid_data['Q_sci'],
+        concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
+        concept_q_sci_df = concept_q_sci_df[concept_q_sci_df['Q_sci'].notna()]
+        if len(concept_q_sci_df) > 0:
+            ax.bar(concept_q_sci_df['Date'],
+                    concept_q_sci_df['Q_sci'],
                     width=width,
                     color=concept_dict[concept]['color'],
                     label=concept)
-            for index, row in valid_data.iterrows():
-                ax.annotate(
-                    f"{row['Project Displayname']}",
-                    #f"{row['Project Displayname']} {row['Shot']}",
-                    xy=(row['Date'], row['Q_sci']),
-                    xytext=(row['Date'], row['Q_sci'] + 0.1),
-                    rotation=90,
-                    ha='left',
-                    va='bottom',
-                fontsize=8
-            )
+    """
+    # Annotate all shots directly
+    for index, row in q_sci_df.iterrows():
+        ax.annotate(
+            f"{row['Project Displayname']}",
+            xy=(row['Date'], row['Q_sci']),
+            xytext=(row['Date'] - timedelta(days=70), row['Q_sci'] + 0.05),
+            rotation=90,
+            fontsize=annotation_text_size
+        )
+    """
+    # Annotate some shots directly
+    shots_to_annotate_directly = ['26148', '99971']
+    direct_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_directly)]
+    for index, row in direct_annotate_df.iterrows():
+        ax.annotate(
+            f"{row['Project Displayname']}",
+            xy=(row['Date'], row['Q_sci']),
+            xytext=(row['Date'] - timedelta(days=70), row['Q_sci'] + 0.05),
+            rotation=90,
+            fontsize=annotation_text_size
+            )   
     
+    # Annotate some shots with arrows (OMEGA)
+    shots_to_annotate_with_arrows = ['99972', '102154']
+    arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_with_arrows)]
+    for index, row in arrow_annotate_df.iterrows():
+        ax.annotate(
+            f"{row['Project Displayname']}",
+            xy=(row['Date'], row['Q_sci']),
+            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.05),
+            rotation=0,
+            fontsize=annotation_text_size,
+            arrowprops={'arrowstyle': '->',
+                        'lw': arrow_width,
+                       }
+            )   
+
+    # Annotate some shots with braces
+    BraceAnnotation(ax, 'JET', x_date=date(1996, 7, 1), y_pos=0.65)
+    BraceAnnotation(ax, 'TFTR', x_date=date(1994, 1, 1), y_pos=0.3)
+    BraceAnnotation(ax, 'NIF', x_date=date(2020, 1, 1), y_pos=2.4, brace_size=55, x_offset_days=800, y_offset=0.2)
+
     # Add legend
     ax.legend()
     # Prepublication Watermark
