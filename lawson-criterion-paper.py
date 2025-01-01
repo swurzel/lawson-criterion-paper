@@ -3654,12 +3654,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.annotate('Prepublication', (date(1995, 1, 1), 0.5), alpha=0.1, size=60, rotation=45)
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
-# Usage
-fig_params = {
-    'dpi': dpi,
-    'figsize': figsize_fullpage,
-    'point_size': point_size
-}
 
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
@@ -4685,18 +4679,19 @@ for date in date_list:
                                      clip_on=False
                                     )
         ax.add_patch(horiz_line)
-        ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.1e20), xycoords='data', alpha=1, color='darkred', rotation=0)
+        ax.annotate(r'$\infty$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 3.1e20), xycoords='data', alpha=1, color='red', rotation=0)
         ax.annotate(r'$10$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 1.8e20), xycoords='data', alpha=1, color='red', rotation=0)
-        ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e19), xycoords='data', alpha=1, color='darkorange', rotation=0)
-        ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4.6e19), xycoords='data', alpha=1, color='green', rotation=0)
-        ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='blue', rotation=0)
-        ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='blue', rotation=0)
-        ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='blue', rotation=0)
-        #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='blue', rotation=0)
-        
+        ax.annotate(r'$2$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 8.5e19), xycoords='data', alpha=1, color='red', rotation=0)
+        ax.annotate(r'$1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 4.6e19), xycoords='data', alpha=1, color='red', rotation=0)
+        ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='red', rotation=0)
+        ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='red', rotation=0)
+        ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='red', rotation=0)
+        #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='red', rotation=0)
+    
         # Inner annotations
         ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
-    
+        ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
+
         ax.annotate(f'{date.year}', (10, 1.5e15), alpha=0.8, size=50)
         if date.year > 2024:
             ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
@@ -4708,7 +4703,7 @@ for date in date_list:
         #leg.set_draggable(state=True)
         #fig.canvas.resizable = True
         #plt.show()
-        fig.savefig(os.path.join('animation', f'{date.year}_fig:scatterplot_ntauE_vs_T'), bbox_inches='tight')
+        fig.savefig(os.path.join('animation', f'{date.year}_scatterplot_ntauE_vs_T'), bbox_inches='tight')
         fig.clear(True)
         plt.close(fig)    
 
