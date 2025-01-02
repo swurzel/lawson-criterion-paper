@@ -4690,7 +4690,6 @@ for date in date_list:
     
         # Inner annotations
         ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
-        ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
         ax.annotate(f'{date.year}', (10, 1.5e15), alpha=0.8, size=50)
         if date.year > 2024:
@@ -4721,3 +4720,5 @@ frames[0].save('animation/lawson.gif', format='GIF',
                append_images=frames[1:],
                save_all=True,
                duration=300, loop=0)
+
+# %%
