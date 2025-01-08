@@ -3322,7 +3322,7 @@ table_list = [{'concepts': ['Tokamak', 'Spherical Tokamak', 'Stellarator'],
               'label': 'tab:mainstream_mcf_data_table',
               'filename': 'data_table_mcf_mainstream.tex',
               },
-              {'concepts': ['FRC', 'RFP', 'Z Pinch', 'Pinch', 'Mirror', 'Spheromak'],
+              {'concepts': ['FRC', 'RFP', 'Z Pinch', 'Pinch', 'Mirror', 'Spheromak', 'MTF'],
               'caption': 'Data for magnetic alternate concepts.',
               'label': 'tab:alternates_mcf_data_table',
               'filename': 'data_table_mcf_alternates.tex',
@@ -3525,57 +3525,58 @@ icf_ex = experiment.IndirectDriveICFDTExperiment()
 # %%
 from datetime import date, timedelta
 from matplotlib.dates import date2num, num2date
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
+import matplotlib.dates as mdates
 
 annotation_text_size = 11
 
 class BraceAnnotation:
-    def __init__(self, ax, text, x_date, y_pos, text_size=annotation_text_size, x_offset_days=230, y_offset=0.09, brace_size=20):
-        """
-        Create a brace annotation with accompanying text label.
+    def __init__(self, ax, text, x_date, y_pos, width_days, leg_height, head_height, line_width, text_size=annotation_text_size):
+        self.ax = ax
+        self.text = text
+        self.x_date = x_date    
+        self.y_pos = y_pos
+        self.width = width_days
+        self.leg_height = leg_height
+        self.head_height = head_height
+        self.line_width = line_width
+        self.text_size = text_size
         
-        Parameters:
-        -----------
-        text : str
-            The text label to display
-        x_date : datetime.date
-            The date position for the brace
-        y_pos : float
-            The y-coordinate position
-        ax : matplotlib.axes.Axes
-            The axes to draw on
-        text_size : int, optional
-            Font size for the text label
-        x_offset_days : int, optional
-            Number of days to offset the text label from the brace
-        brace_width : float, optional
-            Factor to scale the brace width
-        """
-        self.brace = {
-            'text': '{',
-            'rotation': 270,
-            'xy': (x_date, y_pos),
-            'xytext': (x_date, y_pos),
-            'xycoords': 'data',
-            'textcoords': 'data',
-            'size': brace_size,
-            'color': 'black',
-            'transform': ax.get_xaxis_transform()
-        }
+        # Convert date to matplotlib number for calculations
+        x = mdates.date2num(x_date)
+        width = mdates.date2num(x_date + timedelta(days=width_days)) - mdates.date2num(x_date - timedelta(days=width_days))
+
+        # Define the bracket vertices
+        verts = [
+            (x - width/2, y_pos),           # Left end
+            (x - width/2, y_pos + leg_height),  # Left top
+            (x + width/2, y_pos + leg_height),  # Right top
+            (x + width/2, y_pos),           # Right end
+            (x, y_pos + leg_height),          # Center start (middle of horizontal line)
+            (x, y_pos + leg_height + head_height)    # Center end (to top)
+        ]
         
-        self.label = {
-            'text': text,
-            'xy': self.brace['xy'],
-            'xytext': (date.fromordinal(date.toordinal(x_date) + x_offset_days), y_pos + y_offset),
-            'xycoords': self.brace['xycoords'],
-            'textcoords': self.brace['textcoords'],
-            'size': text_size,
-            'rotation': 90,
-            'color': 'black'
-        }
+        # Define the path codes
+        codes = [
+            Path.MOVETO,      # Start at left end
+            Path.LINETO,      # Draw to left top
+            Path.LINETO,      # Draw to right top
+            Path.LINETO,      # Draw to right end
+            Path.MOVETO,      # Move to center bottom (without drawing)
+            Path.LINETO       # Draw center line
+        ]
         
-        # Add the annotations to the plot
-        ax.annotate(**self.brace)
-        ax.annotate(**self.label)
+        # Create and add the path
+        path = Path(verts, codes)
+        patch = PathPatch(path, facecolor='none', edgecolor='black', lw=line_width)
+        ax.add_patch(patch)
+        
+        # Add the text
+        ax.text(x, y_pos + leg_height + head_height, text,
+                horizontalalignment='center',
+                verticalalignment='bottom',
+                size=text_size)
 
 
 
@@ -3644,9 +3645,9 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             )   
 
     # Annotate some shots with braces
-    BraceAnnotation(ax, 'JET', x_date=date(1996, 7, 1), y_pos=0.65)
-    BraceAnnotation(ax, 'TFTR', x_date=date(1994, 1, 1), y_pos=0.3)
-    BraceAnnotation(ax, 'NIF', x_date=date(2020, 1, 1), y_pos=2.4, brace_size=55, x_offset_days=800, y_offset=0.2)
+    BraceAnnotation(ax, 'JET', x_date=date(1997, 6, 1), y_pos=0.65, width_days=240, leg_height=0.05, head_height=0.04, line_width=1)
+    BraceAnnotation(ax, 'TFTR', x_date=date(1994, 11, 1), y_pos=0.3, width_days=270, leg_height=0.05, head_height=0.04, line_width=1)
+    BraceAnnotation(ax, 'NIF', x_date=date(2022, 6, 1), y_pos=2.4, width_days=700, leg_height=0.05, head_height=0.05, line_width=1)
 
     # Add legend
     ax.legend()
