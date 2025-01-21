@@ -4518,7 +4518,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.annotate(**annotation)
     
     # Label horizontal Q_sci^MCF lines
-    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$' + '\n' + r'$@T_i=15 {\rm keV}$', (mcf_horizontal_range_dict[float('inf')][0]+timedelta(days=365*0.5), 1.22e22), alpha=1, color='red')
+    ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$', (mcf_horizontal_range_dict[float('inf')][0]+timedelta(days=365*0.5), 1.22e22), alpha=1, color='red')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=10$', (mcf_horizontal_range_dict[10][0]+timedelta(days=365*0.5), 6.85e21), alpha=1, color='red')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=2$', (mcf_horizontal_range_dict[2][0]+timedelta(days=365*0.5), 2.55e21), alpha=1, color='red')
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=1$', (mcf_horizontal_range_dict[1][0]+timedelta(days=365*0.5), 1.45e21), alpha=1, color='red')
