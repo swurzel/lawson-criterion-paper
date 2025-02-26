@@ -2641,7 +2641,7 @@ for col in DT_requirements_df.columns:
         data['minimum_value'].append(minimum_value)
 
         DT_requirement_minimum_values_df = pd.DataFrame(data)
-DT_requirement_minimum_values_df
+#DT_requirement_minimum_values_df
 
 # %% [markdown]
 # ## Analysis of Experimental Results
@@ -2653,7 +2653,6 @@ DT_requirement_minimum_values_df
 # Get the raw experimental result dataframe
 filename = 'data/experimental_results.pkl'
 experimental_result_df = pd.read_pickle(filename)
-
 # Note the temperatures are stored as strings with the approprate
 # number of significant figures so no changes occur here.
 
@@ -2701,7 +2700,6 @@ for row in experimental_result_df.itertuples():
 mask = experimental_result_df['new_or_changed_2024_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
 
-print(f'Loaded {len(experimental_result_df)} experimental results.')
 
 # %% [markdown]
 # ### Split experimental results into separate Q_sci, MCF, and MIF/ICF dataframes, define headers for dataframe and latex tables. 
@@ -2818,7 +2816,7 @@ print(f'Split data into {len(q_sci_df)} Q_sci experimental results, {len(mcf_df)
 q_sci_df['Q_sci'] = q_sci_df['E_F'] / q_sci_df['E_ext']  # try energy first
 mask = q_sci_df['Q_sci'].isna()  # where energy calculation failed
 q_sci_df.loc[mask, 'Q_sci'] = q_sci_df.loc[mask, 'P_F'] / q_sci_df.loc[mask, 'P_ext']  # try power instead
-q_sci_df
+#q_sci_df
 
 # %% [markdown]
 # ### Make LaTeX dataframe for Q_sci experimental data, save data tables
@@ -2858,7 +2856,7 @@ latex_q_sci_df = latex_q_sci_df.apply(lambda row: format_q_sci_experimental_resu
 # Rename column headers
 latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_sci_calculated_latex_map})    
 
-caption = "Data for experiments which produced sufficient fusion energy to achive non-negligible values of scientific gain $Q_{\mathrm{sci}}$."
+caption = "Data for experiments which produced sufficient fusion energy to achieve appreciable values of scientific gain $Q_{\mathrm{sci}}$."
 label = "tab:q_sci_data_table"
 
 q_sci_table_latex = latex_q_sci_df.to_latex(
@@ -3041,7 +3039,7 @@ latex_icf_mif_df = latex_icf_mif_df.apply(lambda row: format_icf_mif_experimenta
 # Rename column headers
 latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map, **icf_mif_calculated_latex_map})    
 
-caption = "Data for ICF and MIF concepts."
+caption = "Data for ICF and higher-density MIF concepts."
 label = "tab:icf_mif_data_table"
 
 icf_mif_table_latex = latex_icf_mif_df.to_latex(
@@ -3323,7 +3321,7 @@ table_list = [{'concepts': ['Tokamak', 'Spherical Tokamak', 'Stellarator'],
               'filename': 'data_table_mcf_mainstream.tex',
               },
               {'concepts': ['FRC', 'RFP', 'Z Pinch', 'Pinch', 'Mirror', 'Spheromak', 'MTF'],
-              'caption': 'Data for magnetic alternate concepts.',
+              'caption': 'Data for other MCF (i.e. not tokamaks, spherical tokamaks, or stellarators) and lower-density MIF concepts.',
               'label': 'tab:alternates_mcf_data_table',
               'filename': 'data_table_mcf_alternates.tex',
               },
@@ -3748,9 +3746,9 @@ ntauE_indicators = {
     'OMEGA': {'arrow': True,
               'xabs': 1.6,
               'yabs': 7e20},
-    'PCS': {'arrow': True,
-            'xabs': 0.2,
-            'yabs': 3e18},
+    #'PCS': {'arrow': True,
+    #        'xabs': 0.8,
+    #        'yabs': 1e16},
     'PLT': {'arrow': True,
             'xabs': 1.2,
             'yabs': 5.5e18},
@@ -4048,7 +4046,7 @@ nTtauE_indicators = {
               'yabs': 2e21},
     'PCS': {'arrow': True,
             'xabs': 0.2,
-            'yabs': 1.8e18},    
+            'yabs': 4e15},    
     'PLT': {'arrow': True,
             'xabs': 1,
             'yabs': 9e18},
@@ -4235,7 +4233,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_T']), bbox_inches='tight')
 
 # %% [markdown]
-# ## Triple product vs year acheived
+# ## Triple product vs year achieved
 
 # %%
 from datetime import datetime 
@@ -4325,9 +4323,9 @@ indicators = {
     'OMEGA': {'arrow': True,
               'xabs': datetime(2003, 1, 1),
               'yabs': 9e19},
-    'PCS': {'arrow': False,
-              'xabs': datetime(2017, 1, 1),
-              'yabs': 1.7e18},
+    #'PCS': {'arrow': False,
+    #          'xabs': datetime(2017, 1, 1),
+    #          'yabs': 1.7e18},
     'RFX-mod': {'arrow': True,
                 'xabs': datetime(2016, 1, 1),
                 'yabs': 3e16},
