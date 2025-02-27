@@ -3621,7 +3621,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         )
     """
     # Annotate some shots directly
-    shots_to_annotate_directly = ['26148', '99971']
+    shots_to_annotate_directly = ['26148', '99971', '99972']
     direct_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_directly)]
     for index, row in direct_annotate_df.iterrows():
         ax.annotate(
@@ -3633,13 +3633,13 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             )   
     
     # Annotate some shots with arrows (OMEGA)
-    shots_to_annotate_with_arrows = ['99972', '102154']
+    shots_to_annotate_with_arrows = ['102154']
     arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_with_arrows)]
     for index, row in arrow_annotate_df.iterrows():
         ax.annotate(
             f"{row['Project Displayname']}",
             xy=(row['Date'], row['Q_sci']),
-            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.05),
+            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.3),
             rotation=0,
             fontsize=annotation_text_size,
             arrowprops={'arrowstyle': '->',
@@ -3651,6 +3651,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     BraceAnnotation(ax, 'JET', x_date=date(1997, 6, 1), y_pos=0.65, width_days=240, leg_height=0.05, head_height=0.04, line_width=1)
     BraceAnnotation(ax, 'TFTR', x_date=date(1994, 11, 1), y_pos=0.3, width_days=270, leg_height=0.05, head_height=0.04, line_width=1)
     BraceAnnotation(ax, 'NIF', x_date=date(2022, 6, 1), y_pos=2.4, width_days=700, leg_height=0.05, head_height=0.05, line_width=1)
+    BraceAnnotation(ax, 'NIF', x_date=date(2016, 10, 1), y_pos=0.03, width_days=3.5*365, leg_height=0.05, head_height=0.05, line_width=1)
 
     # Add legend
     ax.legend()
