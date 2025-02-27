@@ -2368,6 +2368,9 @@ experiments = [experiment.UniformProfileDTExperiment(),
 # Initialize a dictionary to hold all the new columns
 new_columns = {}
 
+# note that hipabdt stands for high impurity peaked and broad deuterium tritium
+# note that lipabdt stands for low impurity peaked and broad deuterium tritium
+
 for ex in experiments:
     print(f'Calculating lawson and triple product requirements for {ex.name}...')
     for Q in Qs:
@@ -2641,7 +2644,7 @@ for col in DT_requirements_df.columns:
         data['minimum_value'].append(minimum_value)
 
         DT_requirement_minimum_values_df = pd.DataFrame(data)
-#DT_requirement_minimum_values_df
+DT_requirement_minimum_values_df
 
 # %% [markdown]
 # ## Analysis of Experimental Results
@@ -4382,15 +4385,19 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
     ax.grid(which='major')
 
-    # Plot horizontal line for MCF ignition band (actually rectangle of height
-    # equal to difference of Q contour width at minimum value) for limited values of Q
+    # Plot horizontal lines for indicated values of Q_MCF (actually rectangles of height
+    # equal to difference between maximum and minimum values of triple product at temperature
+    # for which the minimum triple product (proportional to pressure) is required.
     #mcf_qs = [float('inf'), 1]
     mcf_qs = [float('inf'), 10, 2, 1]
     for mcf_band in [mcf_band for mcf_band in mcf_bands if mcf_band['Q'] in mcf_qs]:
         min_mcf_low_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'lipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
-        min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
+        T_i0_min_mcf_low_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'lipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['T_i0']
 
+        min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
+        T_i0_min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['T_i0']      
         #min_mcf_high_impurities = DT_min_triple_product_df.loc[DT_min_triple_product_df['Q'] == 'peaked_and_broad_high_impurities Q={Q}'.format(Q=Q)].iloc[0]['minimum_triple_product'] 
+        
         mcf_patch_height = min_mcf_high_impurities - min_mcf_low_impurities
         mcf_patch = patches.Rectangle(xy=(mcf_horizontal_range_dict.get(mcf_band['Q'], [datetime(1950,1,1)])[0],
                                           min_mcf_low_impurities),
@@ -4401,6 +4408,10 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                                           alpha=mcf_band['alpha'],
                                      )
         ax.add_patch(mcf_patch)
+        # print the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
+        print(f"Q={mcf_band['Q']}, T_i0_min_mcf_low_impurities={T_i0_min_mcf_low_impurities:.2f}, T_i0_min_mcf_high_impurities={T_i0_min_mcf_high_impurities:.2f}")
+        # annotate the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
+        ax.annotate(r'$T_{i0} \sim 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
         # Uncomment the below phantom line to display Q_MCF lines in legend
         #legend_string = r'$Q_{{\rm ' + q_type + r'}}^{{\rm MCF}}={' + str(mcf_band['Q']).replace('inf', '\infty') + r'}$'
         #ax.hlines(0, 0, 0, color=mcf_band['color'], alpha=mcf_band['alpha'], 
