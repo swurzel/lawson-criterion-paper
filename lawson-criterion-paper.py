@@ -2644,7 +2644,9 @@ for col in DT_requirements_df.columns:
         data['minimum_value'].append(minimum_value)
 
         DT_requirement_minimum_values_df = pd.DataFrame(data)
-DT_requirement_minimum_values_df
+# The values of temperature at which the minimum triple product
+# is achieved for the low and high impurity cases is in this dataframe
+#DT_requirement_minimum_values_df
 
 # %% [markdown]
 # ## Analysis of Experimental Results
@@ -4306,8 +4308,8 @@ indicators = {
             'xoff': -1,
             'yoff': 0.2},
     'MagLIF': {'arrow': True,
-               'xabs': datetime(2019, 1, 1),
-               'yabs': 1.5e20},
+               'xabs': datetime(2021, 6, 1),
+               'yabs': 1.2e21},
     'MAST': {'arrow': False,
              'xoff': -5,
              'yoff': 0.1},
@@ -4324,8 +4326,8 @@ indicators = {
              'xoff': 0,
              'yoff': 0.2},
     'OMEGA': {'arrow': True,
-              'xabs': datetime(2003, 1, 1),
-              'yabs': 9e19},
+              'xabs': datetime(2006, 6, 1),
+              'yabs': 7e19},
     #'PCS': {'arrow': False,
     #          'xabs': datetime(2017, 1, 1),
     #          'yabs': 1.7e18},
@@ -4411,12 +4413,11 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         # print the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
         print(f"Q={mcf_band['Q']}, T_i0_min_mcf_low_impurities={T_i0_min_mcf_low_impurities:.2f}, T_i0_min_mcf_high_impurities={T_i0_min_mcf_high_impurities:.2f}")
         # annotate the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
-        ax.annotate(r'$T_{i0} \sim 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
         # Uncomment the below phantom line to display Q_MCF lines in legend
         #legend_string = r'$Q_{{\rm ' + q_type + r'}}^{{\rm MCF}}={' + str(mcf_band['Q']).replace('inf', '\infty') + r'}$'
         #ax.hlines(0, 0, 0, color=mcf_band['color'], alpha=mcf_band['alpha'], 
         #          linestyles="solid", linewidths=3, label=legend_string, zorder=0)
-
+    ax.annotate(r'$T_{i0} \approx 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
     # Plot horizontal line for ICF ignition only assuming T_i=4 keV
     icf_ignition_10keV = icf_ex.triple_product_Q_sci(
                                  T_i0=10.0,
