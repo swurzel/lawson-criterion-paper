@@ -78,3 +78,59 @@ def CustomLogarithmicFormatter(x, pos=None):
     else:
         x_formatted = format(x, '0.0f')
     return x_formatted
+
+def latex_table_to_csv(df, output_path, header_map=None):
+    """Convert a DataFrame formatted for LaTeX tables to a clean CSV file.
+    
+    Args:
+        df (pandas.DataFrame): DataFrame that would normally be passed to to_latex()
+        output_path (str): Path where the CSV file should be saved
+        header_map (dict, optional): Dictionary mapping current column names to desired CSV headers.
+                                   If None, uses current column names.
+    
+    This function cleans LaTeX formatting from the DataFrame before saving to CSV:
+    - Removes \num{} wrappers from numbers
+    - Replaces LaTeX placeholders with empty strings
+    - Removes LaTeX formatting from column headers
+    - Handles citations appropriately
+    - Converts scientific notation to plain numbers
+    """
+    # Create a copy to avoid modifying the original DataFrame
+    df_clean = df.copy()
+    
+    def clean_cell(val):
+        if pd.isnull(val):
+            return ''
+        val = str(val)
+        
+        # Remove \num{} wrapper
+        if r'\num{' in val:
+            val = val.replace(r'\num{', '').replace('}', '')
+            
+        # Remove LaTeX citations
+        if r'\onlinecite{' in val:
+            val = val.replace(r'\onlinecite{', '').replace('}', '')
+            
+        # Replace table placeholder with empty string
+        if val == table_placeholder:
+            return ''
+            
+        # Remove other LaTeX formatting
+        val = val.replace('$', '').replace(r'\rm', '').replace(r'\mathrm', '')
+        val = val.replace('{', '').replace('}', '')
+        val = val.replace(r'\si{', '').replace(r'\thead{', '')
+        val = val.replace(r'\\', '')
+        
+        return val.strip()
+    
+    # Apply cleaning to all elements
+    df_clean = df_clean.applymap(clean_cell)
+    
+    # Rename columns if header map provided
+    if header_map is not None:
+        df_clean = df_clean.rename(columns=header_map)
+    
+    # Save to CSV
+    df_clean.to_csv(output_path, index=False)
+
+    

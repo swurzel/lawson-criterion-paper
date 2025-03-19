@@ -2864,6 +2864,8 @@ latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_
 caption = "Data for experiments which produced sufficient fusion energy to achieve appreciable values of scientific gain $Q_{\mathrm{sci}}$."
 label = "tab:q_sci_data_table"
 
+latexutils.latex_table_to_csv(latex_q_sci_df, "q_sci_data.csv")
+
 q_sci_table_latex = latex_q_sci_df.to_latex(
                          caption=caption,
                          label=label,
@@ -3046,6 +3048,8 @@ latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map
 
 caption = "Data for ICF and higher-density MIF concepts."
 label = "tab:icf_mif_data_table"
+
+latexutils.latex_table_to_csv(latex_icf_mif_df, "icf_mif_data.csv")
 
 icf_mif_table_latex = latex_icf_mif_df.to_latex(
                          caption=caption,
@@ -3344,6 +3348,9 @@ for table_dict in table_list:
     
     # Rename the columns of the DataFrame for printing
     filtered_concept_latex_mcf_df = filtered_concept_latex_mcf_df.rename(columns=display_header_map)    
+    
+    latexutils.latex_table_to_csv(filtered_concept_latex_mcf_df, "mcf_data.csv")
+
     mcf_table_latex = filtered_concept_latex_mcf_df.to_latex(
                       caption=table_dict['caption'],
                       label=table_dict['label'],
@@ -3755,6 +3762,9 @@ ntauE_indicators = {
     #'PCS': {'arrow': True,
     #        'xabs': 0.8,
     #        'yabs': 1e16},
+    'PI3': {'arrow': True,
+             'xoff': 0.15,
+             'yoff': 0.15},
     'PLT': {'arrow': True,
             'xabs': 1.2,
             'yabs': 5.5e18},
@@ -3765,8 +3775,8 @@ ntauE_indicators = {
               'xabs': 25,
               'yabs': 1e21},
     'SSPX': {'arrow': True,
-             'xoff': -0.033,
-             'yoff': 0.33},
+             'xoff': 0.2,
+             'yoff': 0.18},
     'ST': {'arrow': True,
            'xabs': 0.25,
            'yabs': 2e17},
@@ -4037,7 +4047,7 @@ nTtauE_indicators = {
              'yoff': 0.06},
     'MST': {'arrow': True,
             'xabs': 0.2,
-            'yabs': 6e17},
+            'yabs': 8e17},
     'NIF': {'arrow': True,
             'xabs': 6.2,
             'yabs': 6e20},
@@ -4052,7 +4062,10 @@ nTtauE_indicators = {
               'yabs': 3e21},
     'PCS': {'arrow': True,
             'xabs': 0.2,
-            'yabs': 4e15},    
+            'yabs': 4e15},
+    'PI3': {'arrow': True,
+             'xoff': -0.7,
+             'yoff': 0.55},    
     'PLT': {'arrow': True,
             'xabs': 1,
             'yabs': 9e18},
@@ -4064,7 +4077,7 @@ nTtauE_indicators = {
              'yoff': 0.39},
     'ST': {'arrow': True,
            'xoff': -0.4,
-           'yoff': 0.15},
+           'yoff': 0.25},
     'START': {'arrow': True,
               'xoff': -0.4,
               'yoff': 0.36},
@@ -4082,7 +4095,7 @@ nTtauE_indicators = {
              'yabs': 9e19},
     'W7-A': {'arrow': True,
              'xoff': -0.45,
-             'yoff': 0.1},
+             'yoff': 0.3},
     'W7-AS': {'arrow': True,
               'xoff': 0.15,
               'yoff': -0.06},
@@ -4419,7 +4432,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         #ax.hlines(0, 0, 0, color=mcf_band['color'], alpha=mcf_band['alpha'], 
         #          linestyles="solid", linewidths=3, label=legend_string, zorder=0)
     ax.annotate(r'$T_{i0} \approx 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
-    # Plot horizontal line for ICF ignition only assuming T_i=4 keV
+    
+    # Plot horizontal lines and annotations for ICF ignition only assuming T_i=4 keV and T_i=10 keV
     icf_ignition_10keV = icf_ex.triple_product_Q_sci(
                                  T_i0=10.0,
                                  Q_sci=float('inf'),
@@ -4440,19 +4454,18 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               zorder=9
              )
 
-    """
     ax.hlines(icf_ignition_10keV,
-              xmin=datetime(2020,1,1),
-              xmax=datetime(2027,1,1),
+              xmin=datetime(1990,1,1),
+              xmax=datetime(2050,1,1),
               color=icf_curve['color'],
               linewidth=2,
               linestyle=(0, icf_curve['dashes']),
               label='_hidden',
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
-              zorder=9
+              zorder=0
              )
-    """
-
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2000,1,1), 1.12e22), alpha=1, color='black')
+    ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
     # Scatterplot of data
     #d = mcf_mif_icf_df[mcf_mif_icf_df['is_concept_record'] == True]
     # Make exception for N210808 since it achieved hot-spot ignition
@@ -4548,8 +4561,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #width, height = 5, 0.4e22  # Width and height in data coordinates
     #ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
     #ax.add_patch(ellipse)
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2002,1,1), 1.1e22), alpha=1, color='black')
-    #ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$@T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
 
     # Add watermark
     ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
