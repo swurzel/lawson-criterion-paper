@@ -41,7 +41,6 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from matplotlib.patches import Ellipse
-from matplotlib.patches import Rectangle
 import matplotlib.patches as patches
 from matplotlib import ticker
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
@@ -357,7 +356,7 @@ for mode in modes:
                                                                           relativistic_mode=mode),
                        axis=1,
                    )
-#bremsstrahlung_correction_df
+bremsstrahlung_correction_df
 
 # %%
 fig, ax = plt.subplots(dpi=dpi)
@@ -2369,6 +2368,9 @@ experiments = [experiment.UniformProfileDTExperiment(),
 # Initialize a dictionary to hold all the new columns
 new_columns = {}
 
+# note that hipabdt stands for high impurity peaked and broad deuterium tritium
+# note that lipabdt stands for low impurity peaked and broad deuterium tritium
+
 for ex in experiments:
     print(f'Calculating lawson and triple product requirements for {ex.name}...')
     for Q in Qs:
@@ -2642,6 +2644,8 @@ for col in DT_requirements_df.columns:
         data['minimum_value'].append(minimum_value)
 
         DT_requirement_minimum_values_df = pd.DataFrame(data)
+# The values of temperature at which the minimum triple product
+# is achieved for the low and high impurity cases is in this dataframe
 #DT_requirement_minimum_values_df
 
 # %% [markdown]
@@ -2675,10 +2679,10 @@ experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
 experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
 experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
-# Set boolean for whether the 2025 update changed the value
+# Set boolean for whether the 2024 update changed the value
 experimental_result_df['include_lawson_plots'] = experimental_result_df['include_lawson_plots'].notna()
 experimental_result_df['include_Qsci_vs_date_plot'] = experimental_result_df['include_Qsci_vs_date_plot'].notna()
-experimental_result_df['new_or_changed_2025_update'] = experimental_result_df['new_or_changed_2025_update'].notna()
+experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
 
 
 # DATE HANDLING
@@ -2698,7 +2702,7 @@ for row in experimental_result_df.itertuples():
         experimental_result_df.at[row.Index, 'Display Date'] = str(int(row.Year))
 
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged data
-mask = experimental_result_df['new_or_changed_2025_update'] == False
+mask = experimental_result_df['new_or_changed_2024_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
 
 
@@ -2859,6 +2863,8 @@ latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_
 
 caption = "Data for experiments which produced sufficient fusion energy to achieve appreciable values of scientific gain $Q_{\mathrm{sci}}$."
 label = "tab:q_sci_data_table"
+
+latexutils.latex_table_to_csv(latex_q_sci_df, "q_sci_data.csv")
 
 q_sci_table_latex = latex_q_sci_df.to_latex(
                          caption=caption,
@@ -3042,6 +3048,8 @@ latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map
 
 caption = "Data for ICF and higher-density MIF concepts."
 label = "tab:icf_mif_data_table"
+
+latexutils.latex_table_to_csv(latex_icf_mif_df, "icf_mif_data.csv")
 
 icf_mif_table_latex = latex_icf_mif_df.to_latex(
                          caption=caption,
@@ -3340,6 +3348,9 @@ for table_dict in table_list:
     
     # Rename the columns of the DataFrame for printing
     filtered_concept_latex_mcf_df = filtered_concept_latex_mcf_df.rename(columns=display_header_map)    
+    
+    latexutils.latex_table_to_csv(filtered_concept_latex_mcf_df, "mcf_data.csv")
+
     mcf_table_latex = filtered_concept_latex_mcf_df.to_latex(
                       caption=table_dict['caption'],
                       label=table_dict['label'],
@@ -3366,14 +3377,16 @@ for table_dict in table_list:
 # Adjust and infer MIF and ICF values so they can be combined with MCF data
 
 def adjust_icf_mif_result(row):
-    # The FIREX adjustment is called out in Section IV.B.2 "Inferring Lawson paramter from inferred pressure and confinement dynamics"
-    # The other adjustments are necessitated by limited profile data for ICF experiments
+    # These adjustments are called out in the paper
+    # TODO write down the page/paragraph here
+    # Special exception for FIREX
     if row['Project Displayname'] == 'FIREX':
         row['T_i_max'] = row['T_e_avg']
     else:
         row['T_i_max'] = row['T_i_avg']
     row['nTtauEstar_max'] = row['nTtauE_avg']
     row['ntauEstar_max'] = row['ntauE_avg']
+
     return row
 
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
@@ -3615,7 +3628,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         )
     """
     # Annotate some shots directly
-    shots_to_annotate_directly = ['26148', '99971']
+    shots_to_annotate_directly = ['26148', '99971', '99972']
     direct_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_directly)]
     for index, row in direct_annotate_df.iterrows():
         ax.annotate(
@@ -3627,13 +3640,13 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             )   
     
     # Annotate some shots with arrows (OMEGA)
-    shots_to_annotate_with_arrows = ['99972', '102154']
+    shots_to_annotate_with_arrows = ['102154']
     arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_with_arrows)]
     for index, row in arrow_annotate_df.iterrows():
         ax.annotate(
             f"{row['Project Displayname']}",
             xy=(row['Date'], row['Q_sci']),
-            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.05),
+            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.3),
             rotation=0,
             fontsize=annotation_text_size,
             arrowprops={'arrowstyle': '->',
@@ -3645,6 +3658,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     BraceAnnotation(ax, 'JET', x_date=date(1997, 6, 1), y_pos=0.65, width_days=240, leg_height=0.05, head_height=0.04, line_width=1)
     BraceAnnotation(ax, 'TFTR', x_date=date(1994, 11, 1), y_pos=0.3, width_days=270, leg_height=0.05, head_height=0.04, line_width=1)
     BraceAnnotation(ax, 'NIF', x_date=date(2022, 6, 1), y_pos=2.4, width_days=700, leg_height=0.05, head_height=0.05, line_width=1)
+    BraceAnnotation(ax, 'NIF', x_date=date(2016, 10, 1), y_pos=0.03, width_days=3.5*365, leg_height=0.05, head_height=0.05, line_width=1)
 
     # Add legend
     ax.legend()
@@ -3653,83 +3667,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 
-
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
-
-# %%
-def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', linewidth=2, zorder=10):
-    """
-    Add a rectangle centered around a point on a plot.
-    
-    Parameters:
-    -----------
-    ax : matplotlib.axes.Axes
-        The axes object to draw on
-    x_center : float, datetime, or pandas Timestamp
-        The x-coordinate of the center point
-    y_center : float
-        The y-coordinate of the center point
-    L_pixels : float
-        The size of the rectangle in pixels
-    color : str, optional
-        The color of the rectangle border
-    linewidth : float, optional
-        The width of the rectangle border
-    zorder : int, optional
-        The z-order of the rectangle (higher numbers appear on top)
-    """
-    # Convert center point to axis coordinates based on x-axis type
-    if ax.get_xscale() == 'log':
-        x_center_axis = (np.log10(x_center) - np.log10(ax.get_xlim()[0])) / (np.log10(ax.get_xlim()[1]) - np.log10(ax.get_xlim()[0]))
-    else:
-        # Handle datetime, Timestamp, or linear x-axis
-        x_min, x_max = ax.get_xlim()
-        # Convert pandas Timestamp or datetime to matplotlib's numeric format
-        if hasattr(x_center, 'timestamp') or isinstance(x_center, datetime):
-            # Get the actual datetime limits from the axis
-            x_min, x_max = mdates.num2date(ax.get_xlim())  # Convert current limits to datetime
-            x_min_num = mdates.date2num(x_min)
-            x_max_num = mdates.date2num(x_max)
-            x_center_num = mdates.date2num(x_center)
-            x_center_axis = (x_center_num - x_min_num) / (x_max_num - x_min_num)
-        else:
-            # Linear numeric x-axis
-            x_center_axis = (x_center - x_min) / (x_max - x_min)
-    
-    # Handle y-axis scale
-    if ax.get_yscale() == 'log':
-        y_center_axis = (np.log10(y_center) - np.log10(ax.get_ylim()[0])) / (np.log10(ax.get_ylim()[1]) - np.log10(ax.get_ylim()[0]))
-    else:
-        y_center_axis = (y_center - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
-    print(f"x_center_axis: {x_center_axis}, y_center_axis: {y_center_axis}")
-    # Get the figure size in pixels
-    fig_width_pixels = ax.figure.get_dpi() * ax.figure.get_figwidth()
-    fig_height_pixels = ax.figure.get_dpi() * ax.figure.get_figheight()
-
-    # Convert pixel length to axis coordinates
-    L_axis_x = L_pixels / fig_width_pixels
-    L_axis_y = L_pixels / fig_height_pixels
-
-    # Calculate rectangle position and size
-    x1_axis = x_center_axis - L_axis_x/2
-    y1_axis = y_center_axis - L_axis_y/2
-    width = L_axis_x
-    height = L_axis_y
-
-    # Create the rectangle
-    rectangle = Rectangle((x1_axis, y1_axis),
-                         width,
-                         height,
-                         fill=False,
-                         color=color,
-                         linewidth=linewidth,
-                         transform=ax.transAxes,
-                         zorder=zorder)
-
-    ax.add_patch(rectangle)
-    return rectangle
-
 
 # %%
 ntauE_indicators = {
@@ -3823,6 +3762,9 @@ ntauE_indicators = {
     #'PCS': {'arrow': True,
     #        'xabs': 0.8,
     #        'yabs': 1e16},
+    'PI3': {'arrow': True,
+             'xoff': 0.15,
+             'yoff': 0.15},
     'PLT': {'arrow': True,
             'xabs': 1.2,
             'yabs': 5.5e18},
@@ -3833,8 +3775,8 @@ ntauE_indicators = {
               'xabs': 25,
               'yabs': 1e21},
     'SSPX': {'arrow': True,
-             'xoff': -0.033,
-             'yoff': 0.33},
+             'xoff': 0.2,
+             'yoff': 0.18},
     'ST': {'arrow': True,
            'xabs': 0.25,
            'yabs': 2e17},
@@ -3974,12 +3916,6 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
             annotation['zorder'] = 10
             ax.annotate(**annotation)
     
-    
-    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
-    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
-    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['ntauEstar_max'].iloc[0]
-    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
-    
     # Custom format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
     
@@ -4104,14 +4040,14 @@ nTtauE_indicators = {
             'xabs': 0.7,
             'yabs': 1.2e17},
     'MagLIF': {'arrow': True,
-               'xabs': 5,
-               'yabs': 2e20},
+               'xabs': 0.5,
+               'yabs': 1e21},
     'MAST': {'arrow': True,
              'xoff': 0.15,
              'yoff': 0.06},
     'MST': {'arrow': True,
             'xabs': 0.2,
-            'yabs': 6e17},
+            'yabs': 8e17},
     'NIF': {'arrow': True,
             'xabs': 6.2,
             'yabs': 6e20},
@@ -4123,10 +4059,13 @@ nTtauE_indicators = {
              'yoff': 0.4},
     'OMEGA': {'arrow': True,
               'xabs': 1.3,
-              'yabs': 2e21},
+              'yabs': 3e21},
     'PCS': {'arrow': True,
             'xabs': 0.2,
-            'yabs': 4e15},    
+            'yabs': 4e15},
+    'PI3': {'arrow': True,
+             'xoff': -0.7,
+             'yoff': 0.55},    
     'PLT': {'arrow': True,
             'xabs': 1,
             'yabs': 9e18},
@@ -4138,7 +4077,7 @@ nTtauE_indicators = {
              'yoff': 0.39},
     'ST': {'arrow': True,
            'xoff': -0.4,
-           'yoff': 0.15},
+           'yoff': 0.25},
     'START': {'arrow': True,
               'xoff': -0.4,
               'yoff': 0.36},
@@ -4156,7 +4095,7 @@ nTtauE_indicators = {
              'yabs': 9e19},
     'W7-A': {'arrow': True,
              'xoff': -0.45,
-             'yoff': 0.1},
+             'yoff': 0.3},
     'W7-AS': {'arrow': True,
               'xoff': 0.15,
               'yoff': -0.06},
@@ -4265,11 +4204,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                 annotation['xytext'] = (10**nTtauE_indicator['xoff'] * row['T_i_max'], 10**nTtauE_indicator['yoff'] * row['nTtauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
-
-    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
-    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
-    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
-    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
 
     # Format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
@@ -4388,8 +4322,8 @@ indicators = {
             'xoff': -1,
             'yoff': 0.2},
     'MagLIF': {'arrow': True,
-               'xabs': datetime(2019, 1, 1),
-               'yabs': 1.5e20},
+               'xabs': datetime(2021, 6, 1),
+               'yabs': 1.2e21},
     'MAST': {'arrow': False,
              'xoff': -5,
              'yoff': 0.1},
@@ -4406,8 +4340,8 @@ indicators = {
              'xoff': 0,
              'yoff': 0.2},
     'OMEGA': {'arrow': True,
-              'xabs': datetime(2003, 1, 1),
-              'yabs': 9e19},
+              'xabs': datetime(2006, 6, 1),
+              'yabs': 7e19},
     #'PCS': {'arrow': False,
     #          'xabs': datetime(2017, 1, 1),
     #          'yabs': 1.7e18},
@@ -4467,15 +4401,19 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
     ax.grid(which='major')
 
-    # Plot horizontal line for MCF ignition band (actually rectangle of height
-    # equal to difference of Q contour width at minimum value) for limited values of Q
+    # Plot horizontal lines for indicated values of Q_MCF (actually rectangles of height
+    # equal to difference between maximum and minimum values of triple product at temperature
+    # for which the minimum triple product (proportional to pressure) is required.
     #mcf_qs = [float('inf'), 1]
     mcf_qs = [float('inf'), 10, 2, 1]
     for mcf_band in [mcf_band for mcf_band in mcf_bands if mcf_band['Q'] in mcf_qs]:
         min_mcf_low_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'lipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
-        min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
+        T_i0_min_mcf_low_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'lipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['T_i0']
 
+        min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['minimum_value'] 
+        T_i0_min_mcf_high_impurities = DT_requirement_minimum_values_df.loc[DT_requirement_minimum_values_df['requirement'] == 'hipabdt_experiment__nTtauE_Q_{q_type}={Q}'.format(Q=mcf_band['Q'], q_type=q_type)].iloc[0]['T_i0']      
         #min_mcf_high_impurities = DT_min_triple_product_df.loc[DT_min_triple_product_df['Q'] == 'peaked_and_broad_high_impurities Q={Q}'.format(Q=Q)].iloc[0]['minimum_triple_product'] 
+        
         mcf_patch_height = min_mcf_high_impurities - min_mcf_low_impurities
         mcf_patch = patches.Rectangle(xy=(mcf_horizontal_range_dict.get(mcf_band['Q'], [datetime(1950,1,1)])[0],
                                           min_mcf_low_impurities),
@@ -4486,12 +4424,16 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                                           alpha=mcf_band['alpha'],
                                      )
         ax.add_patch(mcf_patch)
+        # print the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
+        print(f"Q={mcf_band['Q']}, T_i0_min_mcf_low_impurities={T_i0_min_mcf_low_impurities:.2f}, T_i0_min_mcf_high_impurities={T_i0_min_mcf_high_impurities:.2f}")
+        # annotate the gain and temperature at which the minimum triple product is achieved for the low and high impurity cases
         # Uncomment the below phantom line to display Q_MCF lines in legend
         #legend_string = r'$Q_{{\rm ' + q_type + r'}}^{{\rm MCF}}={' + str(mcf_band['Q']).replace('inf', '\infty') + r'}$'
         #ax.hlines(0, 0, 0, color=mcf_band['color'], alpha=mcf_band['alpha'], 
         #          linestyles="solid", linewidths=3, label=legend_string, zorder=0)
-
-    # Plot horizontal line for ICF ignition only assuming T_i=4 keV
+    ax.annotate(r'$T_{i0} \approx 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
+    
+    # Plot horizontal lines and annotations for ICF ignition only assuming T_i=4 keV and T_i=10 keV
     icf_ignition_10keV = icf_ex.triple_product_Q_sci(
                                  T_i0=10.0,
                                  Q_sci=float('inf'),
@@ -4512,19 +4454,18 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               zorder=9
              )
 
-    """
     ax.hlines(icf_ignition_10keV,
-              xmin=datetime(2020,1,1),
-              xmax=datetime(2027,1,1),
+              xmin=datetime(1990,1,1),
+              xmax=datetime(2050,1,1),
               color=icf_curve['color'],
               linewidth=2,
               linestyle=(0, icf_curve['dashes']),
               label='_hidden',
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
-              zorder=9
+              zorder=0
              )
-    """
-
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2000,1,1), 1.12e22), alpha=1, color='black')
+    ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
     # Scatterplot of data
     #d = mcf_mif_icf_df[mcf_mif_icf_df['is_concept_record'] == True]
     # Make exception for N210808 since it achieved hot-spot ignition
@@ -4570,9 +4511,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             annotation['zorder'] = 10
             ax.annotate(**annotation)
 
-    # Draw golden rectangle around N210808 to highlight that it achieved threshold of ignition and is termimal data point for this graph
-    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
-
     #SPARC
     sparc_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'SPARC']['nTtauEstar_max'].iloc[0]
     # SPARC has rebaselined Q>1 to 2027
@@ -4582,7 +4520,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.add_patch(sparc_rect)
     annotation = {'text': 'SPARC',
                   'xy': (datetime(2029,7,1), sparc_tp - 2e21),
-                  'xytext': (datetime(2025,7,1), 4e22),
+                  'xytext': (datetime(2024,7,1), 4e22),
                   'arrowprops': {'arrowstyle': '->'},
                   'zorder': 10,
                  }
@@ -4623,8 +4561,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #width, height = 5, 0.4e22  # Width and height in data coordinates
     #ellipse = Ellipse((center_x, center_y), width, height, edgecolor='black', facecolor='none', transform=ax.transData)
     #ax.add_patch(ellipse)
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2002,1,1), 1.1e22), alpha=1, color='black')
-    #ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '' + r'$@T_i = 10{\rm keV}$', (2020, 1e21), alpha=1, color='black')
 
     # Add watermark
     ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
@@ -4779,7 +4715,7 @@ for date in date_list:
         ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
 
         ax.annotate(f'{date.year}', (10, 1.5e15), alpha=0.8, size=50)
-        if date.year > 2025:
+        if date.year > 2024:
             ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
             ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
