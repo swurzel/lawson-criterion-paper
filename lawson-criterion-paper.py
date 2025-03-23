@@ -41,6 +41,7 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from matplotlib.patches import Ellipse
+from matplotlib.patches import Rectangle
 import matplotlib.patches as patches
 from matplotlib import ticker
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
@@ -356,7 +357,7 @@ for mode in modes:
                                                                           relativistic_mode=mode),
                        axis=1,
                    )
-bremsstrahlung_correction_df
+#bremsstrahlung_correction_df
 
 # %%
 fig, ax = plt.subplots(dpi=dpi)
@@ -3654,8 +3655,81 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 
+
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
+
+# %%
+def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', linewidth=2, zorder=10):
+    """
+    Add a rectangle centered around a point on a plot.
+    
+    Parameters:
+    -----------
+    ax : matplotlib.axes.Axes
+        The axes object to draw on
+    x_center : float, datetime, or pandas Timestamp
+        The x-coordinate of the center point
+    y_center : float
+        The y-coordinate of the center point
+    L_pixels : float
+        The size of the rectangle in pixels
+    color : str, optional
+        The color of the rectangle border
+    linewidth : float, optional
+        The width of the rectangle border
+    zorder : int, optional
+        The z-order of the rectangle (higher numbers appear on top)
+    """
+    # Convert center point to axis coordinates based on x-axis type
+    if ax.get_xscale() == 'log':
+        x_center_axis = (np.log10(x_center) - np.log10(ax.get_xlim()[0])) / (np.log10(ax.get_xlim()[1]) - np.log10(ax.get_xlim()[0]))
+    else:
+        # Handle datetime, Timestamp, or linear x-axis
+        x_min, x_max = ax.get_xlim()
+        # Convert pandas Timestamp or datetime to matplotlib's numeric format
+        if hasattr(x_center, 'timestamp') or isinstance(x_center, datetime):
+            x_center_num = mdates.date2num(x_center)
+            x_min_num = mdates.date2num(x_min)
+            x_max_num = mdates.date2num(x_max)
+            x_center_axis = (x_center_num - x_min_num) / (x_max_num - x_min_num)
+        else:
+            # Linear numeric x-axis
+            x_center_axis = (x_center - x_min) / (x_max - x_min)
+    
+    # Handle y-axis scale
+    if ax.get_yscale() == 'log':
+        y_center_axis = (np.log10(y_center) - np.log10(ax.get_ylim()[0])) / (np.log10(ax.get_ylim()[1]) - np.log10(ax.get_ylim()[0]))
+    else:
+        y_center_axis = (y_center - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
+
+    # Get the figure size in pixels
+    fig_width_pixels = ax.figure.get_dpi() * ax.figure.get_figwidth()
+    fig_height_pixels = ax.figure.get_dpi() * ax.figure.get_figheight()
+
+    # Convert pixel length to axis coordinates
+    L_axis_x = L_pixels / fig_width_pixels
+    L_axis_y = L_pixels / fig_height_pixels
+
+    # Calculate rectangle position and size
+    x1_axis = x_center_axis - L_axis_x/2
+    y1_axis = y_center_axis - L_axis_y/2
+    width = L_axis_x
+    height = L_axis_y
+
+    # Create the rectangle
+    rectangle = Rectangle((x1_axis, y1_axis),
+                         width,
+                         height,
+                         fill=False,
+                         color=color,
+                         linewidth=linewidth,
+                         transform=ax.transAxes,
+                         zorder=zorder)
+
+    ax.add_patch(rectangle)
+    return rectangle
+
 
 # %%
 ntauE_indicators = {
@@ -3899,6 +3973,12 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
                 annotation['xytext'] = (10**ntauE_indicator['xoff'] * row['T_i_max'], 10**ntauE_indicator['yoff'] * row['ntauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
+    
+    
+    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['ntauEstar_max'].iloc[0]
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
     
     # Custom format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
@@ -4185,6 +4265,11 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                 annotation['xytext'] = (10**nTtauE_indicator['xoff'] * row['T_i_max'], 10**nTtauE_indicator['yoff'] * row['nTtauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
+
+    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
 
     # Format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
@@ -4484,6 +4569,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                 annotation['xytext'] = (row['Date'] + timedelta(days=365*indicator['xoff']), 10**indicator['yoff'] * row['nTtauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
+
+    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['Date'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
+    print(x_center, y_center)
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
 
     #SPARC
     sparc_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'SPARC']['nTtauEstar_max'].iloc[0]
