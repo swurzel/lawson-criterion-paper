@@ -2675,10 +2675,10 @@ experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
 experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
 experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
-# Set boolean for whether the 2024 update changed the value
+# Set boolean for whether the 2025 update changed the value
 experimental_result_df['include_lawson_plots'] = experimental_result_df['include_lawson_plots'].notna()
 experimental_result_df['include_Qsci_vs_date_plot'] = experimental_result_df['include_Qsci_vs_date_plot'].notna()
-experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
+experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2025_update'].notna()
 
 
 # DATE HANDLING
@@ -3366,16 +3366,14 @@ for table_dict in table_list:
 # Adjust and infer MIF and ICF values so they can be combined with MCF data
 
 def adjust_icf_mif_result(row):
-    # These adjustments are called out in the paper
-    # TODO write down the page/paragraph here
-    # Special exception for FIREX
+    # The FIREX adjustment is called out in Section IV.B.2 "Inferring Lawson paramter from inferred pressure and confinement dynamics"
+    # The other adjustments are necessitated by limited profile data for ICF experiments
     if row['Project Displayname'] == 'FIREX':
         row['T_i_max'] = row['T_e_avg']
     else:
         row['T_i_max'] = row['T_i_avg']
     row['nTtauEstar_max'] = row['nTtauE_avg']
     row['ntauEstar_max'] = row['ntauE_avg']
-
     return row
 
 icf_mif_df = icf_mif_df.apply(adjust_icf_mif_result, axis=1)
@@ -3689,9 +3687,11 @@ def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', l
         x_min, x_max = ax.get_xlim()
         # Convert pandas Timestamp or datetime to matplotlib's numeric format
         if hasattr(x_center, 'timestamp') or isinstance(x_center, datetime):
-            x_center_num = mdates.date2num(x_center)
+            # Get the actual datetime limits from the axis
+            x_min, x_max = mdates.num2date(ax.get_xlim())  # Convert current limits to datetime
             x_min_num = mdates.date2num(x_min)
             x_max_num = mdates.date2num(x_max)
+            x_center_num = mdates.date2num(x_center)
             x_center_axis = (x_center_num - x_min_num) / (x_max_num - x_min_num)
         else:
             # Linear numeric x-axis
@@ -3702,7 +3702,7 @@ def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', l
         y_center_axis = (np.log10(y_center) - np.log10(ax.get_ylim()[0])) / (np.log10(ax.get_ylim()[1]) - np.log10(ax.get_ylim()[0]))
     else:
         y_center_axis = (y_center - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
-
+    print(f"x_center_axis: {x_center_axis}, y_center_axis: {y_center_axis}")
     # Get the figure size in pixels
     fig_width_pixels = ax.figure.get_dpi() * ax.figure.get_figwidth()
     fig_height_pixels = ax.figure.get_dpi() * ax.figure.get_figheight()
@@ -4573,7 +4573,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
     n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
     x_center, y_center = n210808_data['Date'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
-    print(x_center, y_center)
+    print(f" Passing in x_center, y_center: {x_center}, {y_center}")
     add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
 
     #SPARC
