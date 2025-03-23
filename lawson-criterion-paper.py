@@ -4548,13 +4548,25 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.hlines(icf_ignition_10keV,
               xmin=datetime(1990,1,1),
               xmax=datetime(2050,1,1),
-              color=icf_curve['color'],
+              #color=icf_curve['color'],
+              color='gold',
               linewidth=2,
               linestyle=(0, icf_curve['dashes']),
               label='_hidden',
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
               zorder=0
              )
+    ax.hlines(icf_ignition_10keV,
+              xmin=datetime(1990,1,1),
+              xmax=datetime(2050,1,1),
+              color='black',
+              linewidth=2,
+              linestyle=':',
+              label='_hidden',
+              #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
+              zorder=1
+             )
+
     ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2000,1,1), 1.12e22), alpha=1, color='black')
     ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
     # Scatterplot of data
