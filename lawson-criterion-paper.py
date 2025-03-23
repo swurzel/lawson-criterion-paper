@@ -41,6 +41,7 @@ from matplotlib import rc
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 from matplotlib.patches import Ellipse
+from matplotlib.patches import Rectangle
 import matplotlib.patches as patches
 from matplotlib import ticker
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
@@ -2679,10 +2680,10 @@ experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
 experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
 experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
-# Set boolean for whether the 2024 update changed the value
+# Set boolean for whether the 2025 update changed the value
 experimental_result_df['include_lawson_plots'] = experimental_result_df['include_lawson_plots'].notna()
 experimental_result_df['include_Qsci_vs_date_plot'] = experimental_result_df['include_Qsci_vs_date_plot'].notna()
-experimental_result_df['new_or_changed_2024_update'] = experimental_result_df['new_or_changed_2024_update'].notna()
+experimental_result_df['new_or_changed_2025_update'] = experimental_result_df['new_or_changed_2025_update'].notna()
 
 
 # DATE HANDLING
@@ -2702,7 +2703,7 @@ for row in experimental_result_df.itertuples():
         experimental_result_df.at[row.Index, 'Display Date'] = str(int(row.Year))
 
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged data
-mask = experimental_result_df['new_or_changed_2024_update'] == False
+mask = experimental_result_df['new_or_changed_2025_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
 
 
@@ -3377,9 +3378,8 @@ for table_dict in table_list:
 # Adjust and infer MIF and ICF values so they can be combined with MCF data
 
 def adjust_icf_mif_result(row):
-    # These adjustments are called out in the paper
-    # TODO write down the page/paragraph here
-    # Special exception for FIREX
+    # The FIREX adjustment is called out in Section IV.B.2 "Inferring Lawson paramter from inferred pressure and confinement dynamics"
+    # The other adjustments are necessitated by limited profile data for ICF experiments
     if row['Project Displayname'] == 'FIREX':
         row['T_i_max'] = row['T_e_avg']
     else:
@@ -3667,8 +3667,83 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 
+
 # %% [markdown]
 # ## Lawson parameter vs ion temperature
+
+# %%
+def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', linewidth=2, zorder=10):
+    """
+    Add a rectangle centered around a point on a plot.
+    
+    Parameters:
+    -----------
+    ax : matplotlib.axes.Axes
+        The axes object to draw on
+    x_center : float, datetime, or pandas Timestamp
+        The x-coordinate of the center point
+    y_center : float
+        The y-coordinate of the center point
+    L_pixels : float
+        The size of the rectangle in pixels
+    color : str, optional
+        The color of the rectangle border
+    linewidth : float, optional
+        The width of the rectangle border
+    zorder : int, optional
+        The z-order of the rectangle (higher numbers appear on top)
+    """
+    # Convert center point to axis coordinates based on x-axis type
+    if ax.get_xscale() == 'log':
+        x_center_axis = (np.log10(x_center) - np.log10(ax.get_xlim()[0])) / (np.log10(ax.get_xlim()[1]) - np.log10(ax.get_xlim()[0]))
+    else:
+        # Handle datetime, Timestamp, or linear x-axis
+        x_min, x_max = ax.get_xlim()
+        # Convert pandas Timestamp or datetime to matplotlib's numeric format
+        if hasattr(x_center, 'timestamp') or isinstance(x_center, datetime):
+            # Get the actual datetime limits from the axis
+            x_min, x_max = mdates.num2date(ax.get_xlim())  # Convert current limits to datetime
+            x_min_num = mdates.date2num(x_min)
+            x_max_num = mdates.date2num(x_max)
+            x_center_num = mdates.date2num(x_center)
+            x_center_axis = (x_center_num - x_min_num) / (x_max_num - x_min_num)
+        else:
+            # Linear numeric x-axis
+            x_center_axis = (x_center - x_min) / (x_max - x_min)
+    
+    # Handle y-axis scale
+    if ax.get_yscale() == 'log':
+        y_center_axis = (np.log10(y_center) - np.log10(ax.get_ylim()[0])) / (np.log10(ax.get_ylim()[1]) - np.log10(ax.get_ylim()[0]))
+    else:
+        y_center_axis = (y_center - ax.get_ylim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
+    print(f"x_center_axis: {x_center_axis}, y_center_axis: {y_center_axis}")
+    # Get the figure size in pixels
+    fig_width_pixels = ax.figure.get_dpi() * ax.figure.get_figwidth()
+    fig_height_pixels = ax.figure.get_dpi() * ax.figure.get_figheight()
+
+    # Convert pixel length to axis coordinates
+    L_axis_x = L_pixels / fig_width_pixels
+    L_axis_y = L_pixels / fig_height_pixels
+
+    # Calculate rectangle position and size
+    x1_axis = x_center_axis - L_axis_x/2
+    y1_axis = y_center_axis - L_axis_y/2
+    width = L_axis_x
+    height = L_axis_y
+
+    # Create the rectangle
+    rectangle = Rectangle((x1_axis, y1_axis),
+                         width,
+                         height,
+                         fill=False,
+                         color=color,
+                         linewidth=linewidth,
+                         transform=ax.transAxes,
+                         zorder=zorder)
+
+    ax.add_patch(rectangle)
+    return rectangle
+
 
 # %%
 ntauE_indicators = {
@@ -3916,6 +3991,11 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
             annotation['zorder'] = 10
             ax.annotate(**annotation)
     
+    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['ntauEstar_max'].iloc[0]
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
+
     # Custom format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
     
@@ -4204,7 +4284,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                 annotation['xytext'] = (10**nTtauE_indicator['xoff'] * row['T_i_max'], 10**nTtauE_indicator['yoff'] * row['nTtauEstar_max'])
             annotation['zorder'] = 10
             ax.annotate(**annotation)
-
+    
+    # Draw rectangle around N210808 to highlight that it achieved ignition and is termimal data point
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['T_i_max'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
+    
     # Format temperature axis
     ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
     
@@ -4431,6 +4516,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
         #legend_string = r'$Q_{{\rm ' + q_type + r'}}^{{\rm MCF}}={' + str(mcf_band['Q']).replace('inf', '\infty') + r'}$'
         #ax.hlines(0, 0, 0, color=mcf_band['color'], alpha=mcf_band['alpha'], 
         #          linestyles="solid", linewidths=3, label=legend_string, zorder=0)
+    
+    # Draw golden rectangle around N210808 to highlight that it achieved threshold of ignition and is termimal data point for this graph
+    n210808_data = mcf_mif_icf_df[mcf_mif_icf_df['Shot'] == 'N210808']
+    x_center, y_center = n210808_data['Date'].iloc[0], n210808_data['nTtauEstar_max'].iloc[0]
+    add_rectangle_around_point(ax, x_center, y_center, L_pixels=50)
+
     ax.annotate(r'$T_{i0} \approx 20 \text{ to } 27~\mathrm{keV}$', xy=(datetime(1950, 6, 1), 5e20), color='red')
     
     # Plot horizontal lines and annotations for ICF ignition only assuming T_i=4 keV and T_i=10 keV
@@ -4715,7 +4806,7 @@ for date in date_list:
         ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
 
         ax.annotate(f'{date.year}', (10, 1.5e15), alpha=0.8, size=50)
-        if date.year > 2024:
+        if date.year > 2025:
             ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
             ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
