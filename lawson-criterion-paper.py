@@ -2702,6 +2702,9 @@ for row in experimental_result_df.itertuples():
     else:
         experimental_result_df.at[row.Index, 'Display Date'] = str(int(row.Year))
 
+# Sort by Display Date upfront here so that the downstream latex tables are in date order
+experimental_result_df = experimental_result_df.sort_values(by='Display Date')
+
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged data
 mask = experimental_result_df['new_or_changed_2025_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
@@ -4085,8 +4088,8 @@ nTtauE_indicators = {
               'xoff': -0.60,
               'yoff': -.1},
     'ASDEX-U': {'arrow': True,
-                'xoff': 0.1,
-                'yoff': -0.35},
+                'xoff': 0.2,
+                'yoff': -0.25},
     'C-2W': {'arrow': True,
              'xabs': 3,
              'yabs': 1e16},
@@ -4118,8 +4121,8 @@ nTtauE_indicators = {
             'xabs': 0.8,
             'yabs': 1.7e15},
     'Globus-M2': {'arrow': True,
-                  'xabs': 0.5,
-                  'yabs': 4e17},
+                  'xabs': 0.7,
+                  'yabs': 3.5e17},
     'GOL-3': {'arrow': True,
               'xabs': 3,
               'yabs': 1e18},
