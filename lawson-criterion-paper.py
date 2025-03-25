@@ -3662,7 +3662,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     # Add inset for log-linear version
-    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.4, 0.0, 1, 1), bbox_transform=ax.transAxes)
+    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.433, 0.06, 1, 0.9), bbox_transform=ax.transAxes)
     for concept in concept_list:
         concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
         concept_q_sci_df = concept_q_sci_df[concept_q_sci_df['Q_sci'].notna()]
@@ -3678,7 +3678,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     inset_ax.yaxis.grid(True, which='major', linewidth=0.8, zorder=0)
     # Set the y-axis formatter to plain numbers (not scientific notation)
     inset_ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
-    inset_ax.tick_params(labelsize=8)
+    inset_ax.tick_params(labelsize=9)
 
 
 
