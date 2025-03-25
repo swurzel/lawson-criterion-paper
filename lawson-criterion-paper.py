@@ -3660,6 +3660,28 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     BraceAnnotation(ax, 'NIF', x_date=date(2022, 6, 1), y_pos=2.4, width_days=700, leg_height=0.05, head_height=0.05, line_width=1)
     BraceAnnotation(ax, 'NIF', x_date=date(2016, 10, 1), y_pos=0.03, width_days=3.5*365, leg_height=0.05, head_height=0.05, line_width=1)
 
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    # Add inset for log-linear version
+    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.4, 0.0, 1, 1), bbox_transform=ax.transAxes)
+    for concept in concept_list:
+        concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
+        concept_q_sci_df = concept_q_sci_df[concept_q_sci_df['Q_sci'].notna()]
+        if len(concept_q_sci_df) > 0:
+            inset_ax.bar(concept_q_sci_df['Date'],
+                    concept_q_sci_df['Q_sci'],
+                    width=width,
+                    color=concept_dict[concept]['color'],
+                    label=concept,
+                    zorder=10)
+    inset_ax.set_yscale('log')
+    # Add horizontal grid lines at major ticks
+    inset_ax.yaxis.grid(True, which='major', linewidth=0.8, zorder=0)
+    # Set the y-axis formatter to plain numbers (not scientific notation)
+    inset_ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
+    inset_ax.tick_params(labelsize=8)
+
+
+
     # Add legend
     ax.legend()
     # Prepublication Watermark
