@@ -150,8 +150,10 @@ pd.set_option('display.max_columns', None)
 #pd.set_option('display.max_rows', None)
 
 # Create required folders
-if not os.path.exists('tables'):
-    os.makedirs('tables')
+if not os.path.exists('tables_latex'):
+    os.makedirs('tables_latex')
+if not os.path.exists('tables_csv'):
+    os.makedirs('tables_csv')
 if not os.path.exists('images'):
     os.makedirs('images')
 
@@ -236,7 +238,7 @@ with pd.option_context("max_colwidth", 500):
     glossary_table_latex = latexutils.JFE_comply(glossary_table_latex)
     #mcf_table_latex = latexutils.include_table_footnote(mcf_peaking_values_table_latex, 'some footnote')
     #print(mcf_peaking_values_table_latex)
-    fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+    fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
     fh.write(glossary_table_latex)
     fh.close()
 variable_df
@@ -1606,7 +1608,7 @@ min_lawson_parameter_latex = min_quantity_df.to_latex(
                   header=display_header_map.values(),
                    )
 min_lawson_parameter_latex = latexutils.JFE_comply(min_lawson_parameter_latex)
-fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
 fh.write(min_lawson_parameter_latex)
 fh.close()
 print(min_lawson_parameter_latex)
@@ -1656,7 +1658,7 @@ min_triple_product_latex = min_quantity_df.to_latex(
                   header=display_header_map.values(),
                    )
 min_triple_product_latex = latexutils.JFE_comply(min_triple_product_latex)
-fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
 fh.write(min_triple_product_latex)
 fh.close()
 print(min_triple_product_latex)
@@ -2128,7 +2130,7 @@ efficiency_table_latex = efficiency_table_df.to_latex(
                   #header=display_header_map.values(),
                    )
 efficiency_table_latex = latexutils.JFE_comply(efficiency_table_latex)
-fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
 fh.write(efficiency_table_latex)
 fh.close()
 #print(efficiency_table_latex)
@@ -2868,7 +2870,7 @@ latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_
 caption = "Data for experiments which produced sufficient fusion energy to achieve appreciable values of scientific gain $Q_{\mathrm{sci}}$."
 label = "tab:q_sci_data_table"
 
-latexutils.latex_table_to_csv(latex_q_sci_df, "q_sci_data.csv")
+latexutils.latex_table_to_csv(latex_q_sci_df, "tables_csv/q_sci_data.csv")
 
 q_sci_table_latex = latex_q_sci_df.to_latex(
                          caption=caption,
@@ -2883,7 +2885,7 @@ q_sci_table_latex = latexutils.JFE_comply(q_sci_table_latex)
 q_sci_table_latex = latexutils.full_width_table(q_sci_table_latex)
 q_sci_table_latex = latexutils.sideways_table(q_sci_table_latex)
 
-fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
 fh.write(q_sci_table_latex)
 fh.close()
 
@@ -3053,7 +3055,7 @@ latex_icf_mif_df = latex_icf_mif_df.rename(columns={**icf_mif_airtable_latex_map
 caption = "Data for ICF and higher-density MIF concepts."
 label = "tab:icf_mif_data_table"
 
-latexutils.latex_table_to_csv(latex_icf_mif_df, "icf_mif_data.csv")
+latexutils.latex_table_to_csv(latex_icf_mif_df, "tables_csv/icf_mif_data.csv")
 
 icf_mif_table_latex = latex_icf_mif_df.to_latex(
                          caption=caption,
@@ -3068,7 +3070,7 @@ icf_mif_table_latex = latexutils.JFE_comply(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.full_width_table(icf_mif_table_latex)
 icf_mif_table_latex = latexutils.sideways_table(icf_mif_table_latex)
 
-fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
 fh.write(icf_mif_table_latex)
 fh.close()
 
@@ -3154,7 +3156,7 @@ with pd.option_context("max_colwidth", 1000):
     mcf_peaking_values_table_latex = latexutils.JFE_comply(mcf_peaking_values_table_latex)
     #mcf_table_latex = latexutils.include_table_footnote(mcf_peaking_values_table_latex, 'some footnote')
     #print(mcf_peaking_values_table_latex)
-    fh=open(os.path.join('tables', label_filename_dict[label]), 'w')
+    fh=open(os.path.join('tables_latex', label_filename_dict[label]), 'w')
     fh.write(mcf_peaking_values_table_latex)
     fh.close()
 peaking_df
@@ -3332,11 +3334,13 @@ table_list = [{'concepts': ['Tokamak', 'Spherical Tokamak', 'Stellarator'],
               'caption': 'Data for tokamaks, spherical tokamaks, and stellarators.',
               'label': 'tab:mainstream_mcf_data_table',
               'filename': 'data_table_mcf_mainstream.tex',
+              'filename_csv': 'tables_csv/mcf_mainstream.csv',
               },
               {'concepts': ['FRC', 'RFP', 'Z Pinch', 'Pinch', 'Mirror', 'Spheromak', 'MTF'],
               'caption': 'Data for other MCF (i.e. not tokamaks, spherical tokamaks, or stellarators) and lower-density MIF concepts.',
               'label': 'tab:alternates_mcf_data_table',
               'filename': 'data_table_mcf_alternates.tex',
+              'filename_csv': 'tables_csv/mcf_alternates.csv',
               },
              ]
 
@@ -3353,7 +3357,7 @@ for table_dict in table_list:
     # Rename the columns of the DataFrame for printing
     filtered_concept_latex_mcf_df = filtered_concept_latex_mcf_df.rename(columns=display_header_map)    
     
-    latexutils.latex_table_to_csv(filtered_concept_latex_mcf_df, "mcf_data.csv")
+    latexutils.latex_table_to_csv(filtered_concept_latex_mcf_df, table_dict['filename_csv'])
 
     mcf_table_latex = filtered_concept_latex_mcf_df.to_latex(
                       caption=table_dict['caption'],
@@ -3368,7 +3372,7 @@ for table_dict in table_list:
     mcf_table_latex = latexutils.sideways_table(mcf_table_latex)
     #mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote)
     mcf_table_latex = latexutils.include_table_footnote(mcf_table_latex, mcf_table_footnote_fixed_references)
-    fh=open(os.path.join('tables', label_filename_dict[table_dict['label']]), 'w')
+    fh=open(os.path.join('tables_latex', label_filename_dict[table_dict['label']]), 'w')
     fh.write(mcf_table_latex)
     fh.close()
 

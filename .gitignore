@@ -6,7 +6,8 @@
 *.pyc
 *.png
 *.csv
-tables
+tables_csv
+tables_latex
 images
 animation
 .DS_Store
