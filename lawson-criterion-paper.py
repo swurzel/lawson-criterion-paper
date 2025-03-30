@@ -21,7 +21,7 @@
 # Samuel E. Wurzel, Scott C. Hsu
 
 # %% [markdown]
-# ## Import python libraries, import fusionlib, setup Airtable credentials, configure LaTeX plotting
+# # Configuration Setup
 
 # %%
 
@@ -160,7 +160,7 @@ if not os.path.exists('images'):
 print('Setup complete.')
 
 # %% [markdown] jp-MarkdownHeadingCollapsed=true
-# ## Table of variable names
+# # Table of variable names
 
 # %%
 definition_dict = {
@@ -244,6 +244,9 @@ with pd.option_context("max_colwidth", 500):
 variable_df
 #print(glossary_table_latex)
 
+
+# %% [markdown]
+# # Theory Plots
 
 # %% [markdown] heading_collapsed=true jp-MarkdownHeadingCollapsed=true
 # ## Cross sections and reactivities
@@ -2346,19 +2349,26 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 fig.savefig(os.path.join('images/', label_filename_dict['fig:peaked_broad_profiles_b']), bbox_inches='tight')
 
 # %% [markdown] hidden=true jp-MarkdownHeadingCollapsed=true
+# # Data Plots
+#
+# This section handles the generation of the plots which contain experimental datapoints (and also plots of the countors of Q for various profile and impurity effects).
+
+# %% [markdown]
 # ## Calculate DT requirements accounting for adjustments (profiles, impurities, $C_B$)
 
 # %% hidden=true
-#THIS CELL WAS REWRITTEN TO AVOID SLOW REPEATED DATAFRAME INSERT WARNING BY GPT-4o
-
 # number_of_temperature_values sets the number of temperature values for all further plots
 number_of_temperature_values = 300
-
 log_temperature_values = np.logspace(math.log10(0.5), math.log10(100), number_of_temperature_values)
+
+# Initialize the dataframe with the temperature values
 DT_requirements_df = pd.DataFrame(log_temperature_values, columns=['T_i0'])
 
-Qs = [float('inf'), 20, 10, 5, 2, 1, 0.1, 0.01, 0.001, 0.0001, 0.00001]
+# Define the Q values to be evaluated (and eventually plotted)
+Qs = [float('inf'), 10, 2, 1, 0.1, 0.01, 0.001]
 
+# Define the experiments to be evaluated
+# see lib/experiment.py for the definitions of the experiment classes
 experiments = [experiment.UniformProfileDTExperiment(),
                experiment.UniformProfileHalfBremsstrahlungDTExperiment(),
                experiment.LowImpurityPeakedAndBroadDTExperiment(),
@@ -2373,15 +2383,16 @@ new_columns = {}
 
 # note that hipabdt stands for high impurity peaked and broad deuterium tritium
 # note that lipabdt stands for low impurity peaked and broad deuterium tritium
-
+# note that pabdt stands for peaked and broad deuterium tritium
+# Run the calculations for each experiment and Q value. This is a bit slow.
 for ex in experiments:
-    print(f'Calculating lawson and triple product requirements for {ex.name}...')
+    print(f'Calculating lawson parameter and triple product requirements for {ex.name}...')
     for Q in Qs:
         # Calculate triple product needed to achieve Q_fuel
         new_columns[ex.name + '__nTtauE_Q_fuel=' + str(Q)] = DT_requirements_df['T_i0'].apply(
             lambda T_i0: ex.triple_product_Q_fuel(T_i0=T_i0, Q_fuel=Q)
         )
-        # Calculate confinement parameter needed to achieve Q_fuel
+        # Calculate Lawson parameter needed to achieve Q_fuel
         new_columns[ex.name + '__ntauE_Q_fuel=' + str(Q)] = DT_requirements_df['T_i0'].apply(
             lambda T_i0: ex.lawson_parameter_Q_fuel(T_i0=T_i0, Q_fuel=Q)
         )
@@ -2389,11 +2400,11 @@ for ex in experiments:
         new_columns[ex.name + '__nTtauE_Q_sci=' + str(Q)] = DT_requirements_df['T_i0'].apply(
             lambda T_i0: ex.triple_product_Q_sci(T_i0=T_i0, Q_sci=Q)
         )
-        # Calculate confinement parameter needed to achieve Q_sci
+        # Calculate Lawson parameter needed to achieve Q_sci
         new_columns[ex.name + '__ntauE_Q_sci=' + str(Q)] = DT_requirements_df['T_i0'].apply(
             lambda T_i0: ex.lawson_parameter_Q_sci(T_i0=T_i0, Q_sci=Q)
         )
-
+print("Calculations complete. Converting to dataframe...")
 # Convert the dictionary to a DataFrame
 new_columns_df = pd.DataFrame(new_columns)
 
@@ -2402,6 +2413,7 @@ DT_requirements_df = pd.concat([DT_requirements_df, new_columns_df], axis=1)
 
 # Required for obtaining clean looking plots
 DT_requirements_df = DT_requirements_df.replace(math.inf, 1e30)
+print("Done.")
 
 # %% [markdown] jp-MarkdownHeadingCollapsed=true
 # ## Plot DT requirements
@@ -2627,13 +2639,42 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 
 fig.savefig(os.path.join('images', label_filename_dict['fig:effect_of_bremsstrahlung_b']), bbox_inches='tight')
 
+# %%
+fig, ax = plt.subplots(dpi=dpi)
+fig.set_size_inches(figsize)
+
+legend_dict = {'uniform_profile_experiment__ntauE_Q_fuel=inf': r'$Q_{\rm fuel}=\infty$',
+               'parabolic_experiment__ntauE_Q_fuel=inf': r'$\langle Q_{\rm fuel} \rangle=\infty$',
+               'uniform_profile_experiment__ntauE_Q_fuel=1': r'$Q_{\rm fuel}=1$',
+               'parabolic_experiment__ntauE_Q_fuel=1': r'$\langle Q_{\rm fuel} \rangle=1$',
+              }
+
+styles = ['-', '--', '-', '--']
+
+DT_requirements_df.plot(x='T_i0',
+                              y=legend_dict.keys(),
+                              linewidth=1,
+                              style=styles,
+                              color=[four_colors[0], four_colors[0], four_colors[-1], four_colors[-1]],
+                              loglog=True,
+                              ax=ax)
+
+ax.legend(legend_dict.values(), loc='upper right')
+ax.set_xlabel(r'$T \; \si{(keV)}$')
+ax.set_ylabel(r'$n T \tau_E \; \si{(m^{-3}s)}$')
+ax.grid('on', which='both', axis='both')
+ax.set_xlim(1, 100)
+ax.set_ylim(1e18, 1e24)
+ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFormatter))
+
+fig.savefig(os.path.join('images', label_filename_dict['fig:effect_of_bremsstrahlung_b']), bbox_inches='tight')
+
 # %% [markdown]
 # ## Calculate Lawson parameter, triple product, and p-tau minima
 
 # %% hidden=true
-# Evaluate minimum Lawson parameters, triple product and p-tau and ion
-# tmperatures to achieve various levels of Q. Used to create bands on triple
-# product vs time graph.
+# Evaluate minimum triple products and Lawson parameters to achieve various levels of Q.
+# Used to create bands on triple product vs time graph.
 
 data = {'requirement':[], 'minimum_value':[], 'T_i0':[]}
 for col in DT_requirements_df.columns:
@@ -2646,10 +2687,21 @@ for col in DT_requirements_df.columns:
         data['T_i0'].append(ion_temperature)
         data['minimum_value'].append(minimum_value)
 
-        DT_requirement_minimum_values_df = pd.DataFrame(data)
-# The values of temperature at which the minimum triple product
-# is achieved for the low and high impurity cases is in this dataframe
-#DT_requirement_minimum_values_df
+DT_requirement_minimum_values_df = pd.DataFrame(data)
+
+conditions_of_interest = ['uniform_profile_experiment__nTtauE_Q_sci=inf',
+                         'uniform_profile_experiment__nTtauE_Q_sci=1',
+                         'hipabdt_experiment__nTtauE_Q_sci=inf', # MCF upper bound
+                         'lipabdt_experiment__nTtauE_Q_sci=inf', # MCF lower bound
+                         'hipabdt_experiment__nTtauE_Q_sci=1', # MCF upper bound
+                         'lipabdt_experiment__nTtauE_Q_sci=1', # MCF lower bound
+                         ]
+# Print out the minimum triple product and temperature for each Q requirement to show
+# how the peak temperature requirements increase with profiles.
+for i, req in enumerate(DT_requirement_minimum_values_df['requirement']):
+    if req in conditions_of_interest:
+        print(f"The minimum value of {req} is {DT_requirement_minimum_values_df.iloc[i]['minimum_value']:.2e} at T_i0 = {DT_requirement_minimum_values_df.iloc[i]['T_i0']:.1f} keV")
+
 
 # %% [markdown]
 # ## Analysis of Experimental Results
