@@ -189,7 +189,7 @@ def DT_adjusted_lawson_parameter(T_i0,
     Keyword Arguments:
     T_i0 -- Peak ion temperature
     Q_fuel -- Fusion power density / P_in
-    lambda_F -- Fusion power density correciton factor
+    lambda_F -- Fusion power density correction factor
     lambda_B -- Bremsstrahlung power density correction factor
     lambda_kappa -- Thermal conduction power density correction factor
     xi -- Ratio of electron temperature to ion temperature i.e., Te/Ti.

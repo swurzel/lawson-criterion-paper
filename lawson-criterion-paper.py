@@ -24,7 +24,6 @@
 # # Configuration Setup
 
 # %%
-
 import math
 import sys
 import os
@@ -2374,6 +2373,7 @@ experiments = [experiment.UniformProfileDTExperiment(),
                experiment.LowImpurityPeakedAndBroadDTExperiment(),
                experiment.HighImpurityPeakedAndBroadDTExperiment(),
                experiment.IndirectDriveICFDTExperiment(),
+               experiment.IndirectDriveICFDTBettiCorrectionExperiment(),
                experiment.ParabolicProfileDTExperiment(),
                experiment.PeakedAndBroadDTExperiment(),
               ]
@@ -2990,14 +2990,16 @@ def ptau_betti_2019(p_stag_Gbar, tau_burn_s):
     # First convert p_stag from Gbar to atm
     p_stag_atm = p_stag_Gbar * conversions.atm_per_gbar
     
+    # In the original paper, we applied this correction factor here.
+    # In the updated paper we apply it to the NIF ignition contour only.
     # We approximate the confinement time tau as tau_burn * [0.93/(2*1.4)]
     # per https://doi.org/10.1103/PhysRevE.99.021201
     ### May need to change 2 ---> 4, See Atzeni p. 40
-    ### #betti_factor = 0.93/(4*1.4)
-
-    betti_factor = 0.93/(2*1.4)
-
-    tau = tau_burn_s * betti_factor
+    ### #atzeni_betti_factor = 0.93/(4*1.4)
+    #betti_factor = 0.93/(2*1.4)
+    #tau = tau_burn_s * betti_factor
+    tau = tau_burn_s
+    
     ptau = p_stag_atm * tau
     return ptau
 
@@ -3588,7 +3590,9 @@ for Q in Q_list:
                       'alpha': Q_to_alpha(Q),
                      })
 
-icf_ex = experiment.IndirectDriveICFDTExperiment()
+# Change ICF curve to use betti correction factor
+#icf_ex = experiment.IndirectDriveICFDTExperiment()
+icf_ex = experiment.IndirectDriveICFDTBettiCorrectionExperiment()
 
 # %% [markdown]
 # ## Scientific gain vs year achieved

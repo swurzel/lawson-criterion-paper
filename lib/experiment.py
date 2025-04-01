@@ -27,7 +27,7 @@ class BaseExperiment:
         if hasattr(self, 'eta_hs'):
             Q_fuel = Q_fuel / self.eta_hs
         # Evaluate Lawson paramter
-        cf = fusionlib.DT_adjusted_lawson_parameter(
+        lp = fusionlib.DT_adjusted_lawson_parameter(
             T_i0=T_i0,
             Q_fuel=Q_fuel,
             lambda_F=self.profile.lambda_F_of_T(T_i0),
@@ -39,7 +39,11 @@ class BaseExperiment:
             brem_frac=self.brem_frac,
             self_heating=self.self_heating,
         )
-        return cf
+        # Apply betti correction factor if it exists. This is an adjustment to tau
+        # so it is applied here.
+        if hasattr(self, 'tau_adjustment_factor'):
+            lp = lp * self.tau_adjustment_factor
+        return lp
     
     def lawson_parameter_Q_sci(self, T_i0, Q_sci):
         """Required confinement parameter n_e tau_E required to achieve Q_sci
@@ -198,6 +202,30 @@ class IndirectDriveICFDTExperiment(BaseExperiment):
         self.eta_abs = 0.0087
         self.eta_hs = 0.65
         self.self_heating = True
+
+class IndirectDriveICFDTBettiCorrectionExperiment(BaseExperiment):
+    def __init__(self):
+        self.name = 'icf_indirect_drive_dt_betti_correction_experiment'
+        self.displayname = 'icf indirect drive dt betti correction experiment'
+        self.profile = plasmaprofile.UniformProfile()  
+        self.xi = 1
+        self.Z_eff = 1
+        self.Z_bar = 1
+        self.brem_frac = 0
+        self.self_heating = True
+        
+        # representative of indirect drive ICF (Shot N191007 at NIF)
+        # Laser energy = 1.91 MJ
+        # Fuel Kinetic Energy = 16.7 kJ
+        # Hotspot energy = 10.9 kJ
+        self.eta_abs = 0.0087
+        self.eta_hs = 0.65
+        self.self_heating = True
+
+        # This is the betti correction factor
+        # We approximate the confinement time tau as tau_burn * [0.93/(2*1.4)]
+        # per https://doi.org/10.1103/PhysRevE.99.021201
+        self.tau_adjustment_factor = 1 / (0.93/(2*1.4))
         
 class IndirectDriveICFDTNoSelfHeatingExperiment(BaseExperiment):
     def __init__(self):
