@@ -3862,8 +3862,8 @@ ntauE_indicators = {
                     'xabs': 0.015,
                     'yabs': 3e16},
     'FIREX': {'arrow': True,
-              'xabs': 0.75,
-              'yabs': 3e20},
+              'xabs': 0.6,
+              'yabs': 1.1e20},
     'FRX-L': {'arrow': True,
               'xabs': 0.08,
               'yabs': 3e17},
@@ -3883,8 +3883,8 @@ ntauE_indicators = {
             'xabs': 1.5,
             'yabs': 5e16},
     'ITER': {'arrow': True,
-             'xabs': 14.5,
-             'yabs': 3.5e21},
+             'xabs': 10,
+             'yabs': 1e20},
     'JET': {'arrow': True,
             'xabs': 20,
             'yabs': 3e18},
@@ -3911,10 +3911,10 @@ ntauE_indicators = {
             'yabs': 8e16},
     'NIF': {'arrow': True,
             'xabs': 6,
-            'yabs': 1e20},
+            'yabs': 3e20},
     'NOVA': {'arrow': True,
-             'xabs': 0.5,
-             'yabs': 2e20},
+             'xabs': 0.3,
+             'yabs': 2.5e20},
     'NSTX': {'arrow': True,
              'xoff': -0.25,
              'yoff': 0.60},
@@ -3935,7 +3935,7 @@ ntauE_indicators = {
                 'yabs': 8e16},
     'SPARC': {'arrow': True,
               'xabs': 25,
-              'yabs': 1e21},
+              'yabs': 1e20},
     'SSPX': {'arrow': True,
              'xoff': 0.2,
              'yoff': 0.18},
@@ -3971,7 +3971,7 @@ ntauE_indicators = {
                'yabs': 3.1e16}
 }
 
-# Iignition ICF curve
+# Ignition ICF curve
 icf_curves = [{'Q':float('inf'),
                'dashes':  (1, 0),
                'linewidth': '0.1',
@@ -4111,7 +4111,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
-    ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(2.76, 1.85e21), xycoords='data', alpha=1, color='black', rotation=-56)
+    ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(35, 2.5e20), xycoords='data', alpha=1, color='black', rotation=25)
     ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
     # Legend to the right
@@ -4144,8 +4144,8 @@ nTtauE_indicators = {
                   'xoff': -0.62,
                   'yoff': 0},
     'Alcator C': {'arrow': True,
-                  'xoff': -0.51,
-                  'yoff': 0.3},
+                  'xabs': 0.3,
+                  'yabs': 1e20},
     'ASDEX': {'arrow': True,
               'xoff': -0.60,
               'yoff': -.1},
@@ -4216,11 +4216,11 @@ nTtauE_indicators = {
             'xabs': 0.2,
             'yabs': 8e17},
     'NIF': {'arrow': True,
-            'xabs': 6.2,
-            'yabs': 6e20},
+            'xabs': 6.5,
+            'yabs': 8e20},
     'NOVA': {'arrow': True,
-             'xoff': -0.51,
-             'yoff': 0.17},
+             'xabs': 0.3,
+             'yabs': 2e20},
     'NSTX': {'arrow': True,
              'xoff': -0.6,
              'yoff': 0.4},
@@ -4237,8 +4237,8 @@ nTtauE_indicators = {
             'xabs': 1,
             'yabs': 9e18},
     'SPARC': {'arrow': True,
-              'xabs': 25,
-              'yabs': 2e22},
+              'xabs': 35,
+              'yabs': 3e21},
     'SSPX': {'arrow': True,
              'xoff': -0.8,
              'yoff': 0.39},
@@ -4405,7 +4405,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #ax.annotate(r'$10^{-4}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e17), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(1.9, 1.02e22), xycoords='data', alpha=1, color='black', rotation=-40)
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(30, 7e21), xycoords='data', alpha=1, color='black', rotation=30)
     ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.3e12), xycoords='data', alpha=1, color='black', size=10)
 
     
@@ -4482,8 +4482,8 @@ indicators = {
              'xabs': datetime(2027, 1, 1),
              'yabs': 9e17},
     'JET': {'arrow': False,
-            'xoff': 0,
-            'yoff': -0.25},
+            'xoff': -6,
+            'yoff': 0},
     'JT-60U': {'arrow': False,
                'xoff': 0,
                'yoff': -0.25},
@@ -4495,7 +4495,7 @@ indicators = {
             'yoff': 0.2},
     'MagLIF': {'arrow': True,
                'xabs': datetime(2021, 6, 1),
-               'yabs': 1.2e21},
+               'yabs': 2e20},
     'MAST': {'arrow': False,
              'xoff': -5,
              'yoff': 0.1},
@@ -4503,8 +4503,8 @@ indicators = {
             'xabs': datetime(2010, 1, 1),
             'yabs': 6e15},
     'NIF': {'arrow': True,
-            'xabs': datetime(2017, 1, 1),
-            'yabs': 4e22},
+            'xabs': datetime(2013, 1, 1),
+            'yabs': 5e22},
     'NOVA': {'arrow': False,
              'xoff': 1,
              'yoff': -0.2},
@@ -4512,8 +4512,8 @@ indicators = {
              'xoff': 0,
              'yoff': 0.2},
     'OMEGA': {'arrow': True,
-              'xabs': datetime(2006, 6, 1),
-              'yabs': 7e19},
+              'xabs': datetime(2012, 6, 1),
+              'yabs': 4e21},
     'PCS': {'arrow': True,
               'xabs': datetime(2025, 1, 1),
               'yabs': 3e16},
@@ -4527,8 +4527,8 @@ indicators = {
               'xabs': datetime(1986, 1, 1),
               'yabs': 3e16},
     'TFTR': {'arrow': False,
-             'xoff': 1,
-             'yoff': 0},
+             'xoff': -2,
+             'yoff': 0.2},
     'TMX-U': {'arrow': False,
               'xabs': datetime(1985, 1, 1),
               'yabs': 2e14},
@@ -4633,7 +4633,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
              )
 
     ax.hlines(icf_ignition_10keV,
-              xmin=datetime(1990,1,1),
+              xmin=datetime(2000,1,1),
               xmax=datetime(2050,1,1),
               #color=icf_curve['color'],
               color='gold',
@@ -4641,21 +4641,22 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               linestyle=(0, icf_curve['dashes']),
               label='_hidden',
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
-              zorder=0
+              zorder=2
              )
     ax.hlines(icf_ignition_10keV,
-              xmin=datetime(1990,1,1),
+              xmin=datetime(2000,1,1),
               xmax=datetime(2050,1,1),
               color='black',
               linewidth=2,
               linestyle=':',
               label='_hidden',
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
-              zorder=1
+              zorder=3
              )
-
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$' + '\n' + r'$@T_i = 4{\rm keV}$', (datetime(2000,1,1), 1.12e22), alpha=1, color='black')
-    ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
+    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', (datetime(2021,1,1), 4e22), alpha=1, color='black')
+    ax.annotate(r'${\rm @ 10~keV}$', (datetime(2033,1,1), 1.25e22), alpha=1, color='black')
+    ax.annotate(r'${\rm @ 4~keV}$', (datetime(2033,1,1), 4e22), alpha=1, color='black')
+    #ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
     # Scatterplot of data
     #d = mcf_mif_icf_df[mcf_mif_icf_df['is_concept_record'] == True]
     # Make exception for N210808 since it achieved hot-spot ignition
@@ -4710,7 +4711,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.add_patch(sparc_rect)
     annotation = {'text': 'SPARC',
                   'xy': (datetime(2029,7,1), sparc_tp - 2e21),
-                  'xytext': (datetime(2024,7,1), 4e22),
+                  'xytext': (datetime(2025,1,1), 6e20),
                   'arrowprops': {'arrowstyle': '->'},
                   'zorder': 10,
                  }
@@ -4725,7 +4726,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.add_patch(iter_rect)
     annotation = {'text': 'ITER',
                   'xy': (datetime(2041,7,1), iter_tp),
-                  'xytext': (datetime(2037,1,1), 4e22),
+                  'xytext': (datetime(2039,1,1), 1e21),
                   'arrowprops': {'arrowstyle': '->'},
                   'zorder': 10,
                  }
