@@ -2860,9 +2860,9 @@ icf_mif_airtable_latex_map = {
 
 # Mapping from what's calculated in this code to what should be printed in latex tables
 icf_mif_calculated_latex_map = {
-    'ptau': r'\thead{$P\tau$ \\ (\si{atm~s})}',
-    'ntauE_avg': r'\thead{$n\tau$ \\ (\si{m^{-3}~s})}',
-    'nTtauE_avg': r'\thead{$n \langle T \rangle_{\rm n} \tau$ \\ (\si{keV~m^{-3}~s})}',
+    'ptau': r'\thead{$P\tau_{\rm stag}$ \\ (\si{atm~s})}',
+    'ntauE_avg': r'\thead{$n\tau_{\rm stag}$ \\ (\si{m^{-3}~s})}',
+    'nTtauE_avg': r'\thead{$n \langle T \rangle_{\rm n} \tau_{\rm stag}$ \\ (\si{keV~m^{-3}~s})}',
 
 }
 # Only keep columns that are relevant to ICF/MIF. Also add the Date column since it's
@@ -2972,7 +2972,10 @@ def ptau_betti_2010(rhoR_tot, T_i_avg, YOC, mu=0.5):
     return ptau
 
 def ptau_betti_2019(p_stag_Gbar, tau_burn_s):
-    """Calculate the effective ptau using Betti's 2019 approach and return
+    """
+    THIS FUNCTION IS DEPRECATED. Use ptau_direct instead. See 2025 paper for details.
+
+    Calculate the effective ptau using Betti's 2019 approach and return
     pressure * confinement time in atm s.
     
     This approach takes inferred pressure p_stag in Gbar
@@ -2987,6 +2990,7 @@ def ptau_betti_2019(p_stag_Gbar, tau_burn_s):
     p_stag_Gbar -- inferred stagnation pressure in Gbar
     tau_burn_s -- burn duration in s. FWHM of neutron emissions.
     """
+    raise ValueError('This function is deprecated. Use ptau_direct instead.')
     # First convert p_stag from Gbar to atm
     p_stag_atm = p_stag_Gbar * conversions.atm_per_gbar
     
@@ -2996,9 +3000,8 @@ def ptau_betti_2019(p_stag_Gbar, tau_burn_s):
     # per https://doi.org/10.1103/PhysRevE.99.021201
     ### May need to change 2 ---> 4, See Atzeni p. 40
     ### #atzeni_betti_factor = 0.93/(4*1.4)
-    #betti_factor = 0.93/(2*1.4)
-    #tau = tau_burn_s * betti_factor
-    tau = tau_burn_s
+    betti_factor = 0.93/(2*1.4)
+    tau = tau_burn_s * betti_factor
     
     ptau = p_stag_atm * tau
     return ptau
@@ -3010,7 +3013,7 @@ def ptau_direct(p_stag_Gbar, tau_burn_s):
     
     Keyword arguments:
     p_stag_Gbar -- Inferred stagnation pressure in Gbar
-    tau_burn_s -- Burn time in seconds
+    tau_burn_s -- Burn time in seconds aka tau_stag
     """
     # First convert p_stag from Gbar to atm
     p_stag_atm = p_stag_Gbar * conversions.atm_per_gbar
@@ -3028,13 +3031,13 @@ def icf_mif_calculate(row):
                                       T_i_avg=row['T_i_avg'],
                                       YOC=row['YOC'])
     elif row['Project Displayname'] == 'NOVA':
-        row['ptau'] = ptau_betti_2019(p_stag_Gbar=float(row['p_stag']),
+        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
                                       tau_burn_s=row['tau_stag']) 
     elif row['Project Displayname'] == 'OMEGA' and not pd.isnull(float(row['p_stag'])):
-        row['ptau'] = ptau_betti_2019(p_stag_Gbar=float(row['p_stag']),
+        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
                                       tau_burn_s=row['tau_stag'])
     elif row['Project Displayname'] == 'NIF':
-        row['ptau'] = ptau_betti_2019(p_stag_Gbar=float(row['p_stag']),
+        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
                                       tau_burn_s=row['tau_stag'])   
     elif row['Project Displayname'] == 'MagLIF':
         row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
@@ -3998,7 +4001,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     ax.set_yscale('log')
     ax.set_xscale('log')
     ax.set_xlabel(r'$T_{i0}, \langle T_i \rangle_{\rm n} \; {\rm (keV)}$')
-    ax.set_ylabel(r'$n_{i0} \tau_E^*, \; n \tau \; {\rm (m^{-3}~s)}$')
+    ax.set_ylabel(r'$n_{i0} \tau_E^*, \; n \tau_{\rm stag} \; {\rm (m^{-3}~s)}$')
     ax.grid('on', which='major', axis='both')
     #ax.set_title('Lawson Parameter vs Ion Temperature', size=16)
 
@@ -4111,7 +4114,7 @@ with plt.style.context(['./styles/large.mplstyle'], after_reset=True):
     #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
-    ax.annotate(r'$(n \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(35, 2.5e20), xycoords='data', alpha=1, color='black', rotation=25)
+    ax.annotate(r'$(n \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(25, 4.9e20), xycoords='data', alpha=1, color='black', rotation=25)
     ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
     # Legend to the right
@@ -4198,7 +4201,7 @@ nTtauE_indicators = {
             'xabs': 20,
             'yabs': 0.5e20},
     'JT-60U': {'arrow': True,
-               'xabs': 19,
+               'xabs': 12,
                'yabs': 1.55e21},
     'KSTAR': {'arrow': True,
               'xabs': 1,
@@ -4237,8 +4240,8 @@ nTtauE_indicators = {
             'xabs': 1,
             'yabs': 9e18},
     'SPARC': {'arrow': True,
-              'xabs': 35,
-              'yabs': 3e21},
+              'xabs': 30,
+              'yabs': 2e21},
     'SSPX': {'arrow': True,
              'xoff': -0.8,
              'yoff': 0.39},
@@ -4405,7 +4408,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #ax.annotate(r'$10^{-4}$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e17), xycoords='data', alpha=1, color='red', rotation=0)
     
     # Inner annotations
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(30, 7e21), xycoords='data', alpha=1, color='black', rotation=30)
+    ax.annotate(r'$(n T \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(0.6, 4e22), xycoords='data', alpha=1, color='black', rotation=0)
     ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.3e12), xycoords='data', alpha=1, color='black', size=10)
 
     
@@ -4420,7 +4423,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     plt.legend()
     
     ax.set_xlabel(r'$T_{i0}, \langle T_i \rangle_{\rm n} \; {\rm (keV)}$')
-    ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
+    ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau_{\rm stag} \; {\rm (m^{-3}~keV~s)}$')
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_T']), bbox_inches='tight')
 
 # %% [markdown]
@@ -4503,7 +4506,7 @@ indicators = {
             'xabs': datetime(2010, 1, 1),
             'yabs': 6e15},
     'NIF': {'arrow': True,
-            'xabs': datetime(2013, 1, 1),
+            'xabs': datetime(2008, 1, 1),
             'yabs': 5e22},
     'NOVA': {'arrow': False,
              'xoff': 1,
@@ -4570,7 +4573,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Label Title and Axes
     #ax.set_title('Record Triple Product by Concept vs Year', size=16)
     ax.set_xlabel(r'Year')
-    ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau \; {\rm (m^{-3}~keV~s)}$')
+    ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau_{\rm stag} \; {\rm (m^{-3}~keV~s)}$')
     ax.grid(which='major')
 
     # Plot horizontal lines for indicated values of Q_MCF (actually rectangles of height
@@ -4653,7 +4656,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
               #label=r'$(n T \tau)_{\rm ig}^{\rm ICF}$',
               zorder=3
              )
-    ax.annotate(r'$(n T \tau)_{\rm ig, hs}^{\rm ICF}$', (datetime(2021,1,1), 4e22), alpha=1, color='black')
+    ax.annotate(r'$(n T \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', (datetime(2017,1,1), 4e22), alpha=1, color='black')
     ax.annotate(r'${\rm @ 10~keV}$', (datetime(2033,1,1), 1.25e22), alpha=1, color='black')
     ax.annotate(r'${\rm @ 4~keV}$', (datetime(2033,1,1), 4e22), alpha=1, color='black')
     #ax.annotate(r'$@T_i = 10{\rm keV}$', (datetime(1990,1,1), 3.7e21), alpha=1, color='black')
