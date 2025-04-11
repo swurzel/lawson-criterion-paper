@@ -81,6 +81,10 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
                        '11B(p,4He)4He4He': 'purple',
                       }
 
+# Ploting options
+add_prepublication_watermark = True
+generate_animation = False # default to false since this is slow
+
 # Naming for figures
 label_filename_dict = {
     ### Figures
@@ -3756,7 +3760,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Add legend
     ax.legend()
     # Prepublication Watermark
-    ax.annotate('Prepublication', (date(1995, 1, 1), 0.5), alpha=0.1, size=60, rotation=45)
+    if add_prepublication_watermark:
+        ax.annotate('Prepublication', (date(1995, 1, 1), 0.5), alpha=0.1, size=60, rotation=45)
     plt.tight_layout()
     fig.savefig(os.path.join('images', 'Qsci_vs_year'), bbox_inches='tight')
 
@@ -4107,7 +4112,8 @@ def plot_ntau_vs_T(on_or_before_date=None,
         
         ### ANNOTATIONS
         # Prepublication Watermark
-        ax.annotate('Prepublication', (0.02, 1.5e15), alpha=0.1, size=60, rotation=45)
+        if add_prepublication_watermark:
+            ax.annotate('Prepublication', (0.02, 1.5e15), alpha=0.1, size=60, rotation=45)
         
         # Right side annotations
         annotation_offset = 5
@@ -4411,7 +4417,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     
     ### ANNOTATIONS
     # Prepublication Watermark
-    ax.annotate('Prepublication', (0.02, 1.5e15), alpha=0.1, size=60, rotation=45)
+    if add_prepublication_watermark:
+        ax.annotate('Prepublication', (0.02, 1.5e15), alpha=0.1, size=60, rotation=45)
     
     # Right side annotations
     annotation_offset = 5
@@ -4783,7 +4790,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     #ax.add_patch(ellipse)
 
     # Add watermark
-    ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
+    if add_prepublication_watermark:
+        ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
     
     # Legend to the right
     #plt.legend(bbox_to_anchor=(1, 1.015), ncol=1)
@@ -4804,11 +4812,9 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # %%
 from PIL import Image
 import glob
-# Set produce_animation to True to generate the animation
-# Default is False because it takes a long time to run
-produce_animation = True
 
-if produce_animation:
+# See switch in top config section. Reason is that generating animation is slow.
+if generate_animation: 
     # delete any old images in animation folder
     files = glob.glob('animation/*.png')
     for f in files:
