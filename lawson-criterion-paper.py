@@ -44,6 +44,10 @@ from matplotlib.patches import Rectangle
 import matplotlib.patches as patches
 from matplotlib import ticker
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
+from tqdm import tqdm
+from PIL import Image
+import glob
+
 
 # Import our library/utility fuctions
 from lib import latexutils
@@ -83,7 +87,6 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
 
 # Ploting options
 add_prepublication_watermark = True
-generate_animation = False # default to false since this is slow
 
 # Naming for figures
 label_filename_dict = {
@@ -3852,7 +3855,8 @@ def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', l
 def plot_ntau_vs_T(on_or_before_date=None,
                    annotate_year=None,
                    filename=os.path.join('images', label_filename_dict['fig:scatterplot_ntauE_vs_T']),
-                   display=True):
+                   display=True,
+                   width=None):
     """
     Plots ntau vs T with optional filters. It's a function so it can be leveraged for animations.
 
@@ -4137,7 +4141,10 @@ def plot_ntau_vs_T(on_or_before_date=None,
         
         # Inner annotations
         ax.annotate(r'$(n \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(25, 4.9e20), xycoords='data', alpha=1, color='black', rotation=25)
-        ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
+        
+        # Only show "* Maximum projected" if the year is greater than the current year or if no year is being displayed.
+        if on_or_before_date is None or on_or_before_date.year > datetime.now().year:
+            ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
         if on_or_before_date is not None:
             ax.annotate(f'{on_or_before_date.year}', (10, 1.5e15), alpha=0.8, size=40)
@@ -4810,32 +4817,35 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # ## Animation
 
 # %%
-from PIL import Image
-import glob
-
-# See switch in top config section. Reason is that generating animation is slow.
+generate_animation = True # Add a switch here since this can be slow
 if generate_animation: 
     # delete any old images in animation folder
     files = glob.glob('animation/*.png')
     for f in files:
         os.remove(f)
-    date_list = [datetime(year, 1, 1) for year in range(1956, 2039)]
-    date_list = [datetime(2040, 1, 1)] + date_list
-    for date in date_list:
-        print(f'Running {date.year}...')
+    #date_list = [datetime(year, 1, 1) for year in range(1956, 2039)]
+    date_list = [datetime(year, 1, 1) for year in range(1956, 2025)]
+    #date_list = [datetime(2040, 1, 1)] + date_list
+
+    for date in tqdm(date_list, desc="Generating plots for animation..."):
         plot_ntau_vs_T(on_or_before_date=date,
                        filename=os.path.join('animation', f'{date.year}_scatterplot_ntauE_vs_T'),
-                       display=False)
-    print("Joining images to make animation...")
+                       display=False,
+                       width=500)
     frames = []
     imgs = glob.glob("animation/*.png")
     imgs.sort()
-    for i in imgs:
+    print("Downsizing each image to 800px width and joining into an animation...")
+    plot_width = 800  # Settable variable for plot width
+    for i in tqdm(imgs, desc="Processing images"):
         new_frame = Image.open(i)
+        new_frame = new_frame.resize((plot_width, int(new_frame.height * (plot_width / new_frame.width))), Image.LANCZOS)
         frames.append(new_frame)
-    # Save into a GIF file that loops forever
+    # Save into a GIF file that loops once. Set loop=0 to loop forever.
     frames[0].save('animation/lawson.gif', format='GIF',
                    append_images=frames[1:],
                    save_all=True,
-                   duration=300, loop=0)
+                   duration=300, loop=1)
     print("Done.")
+
+# %%
