@@ -4839,7 +4839,7 @@ if generate_animation:
     plot_width = 800  # Settable variable for plot width
     for i in tqdm(imgs, desc="Processing images"):
         new_frame = Image.open(i)
-        new_frame = new_frame.resize((plot_width, int(new_frame.height * (plot_width / new_frame.width))), Image.LANCZOS)
+        new_frame = new_frame.resize((plot_width, int(new_frame.height * (plot_width / new_frame.width))), Image.Resampling.BICUBIC)
         frames.append(new_frame)
     # Save into a GIF file that loops once. Set loop=0 to loop forever.
     frames[0].save('animation/lawson.gif', format='GIF',
