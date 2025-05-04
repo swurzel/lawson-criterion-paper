@@ -3853,7 +3853,6 @@ def add_rectangle_around_point(ax, x_center, y_center, L_pixels, color='gold', l
 
 # %%
 def plot_ntau_vs_T(on_or_before_date=None,
-                   annotate_year=None,
                    filename=os.path.join('images', label_filename_dict['fig:scatterplot_ntauE_vs_T']),
                    display=True,
                    width=None):
@@ -3861,9 +3860,10 @@ def plot_ntau_vs_T(on_or_before_date=None,
     Plots ntau vs T with optional filters. It's a function so it can be leveraged for animations.
 
     Parameters:
-    - before_year: Filter data before this year.
-    - annotate_year: Year to annotate on the plot.
+    - on_or_before_year: Filter data before this year.
     - filename: Filename to save the plot.
+    - display: Whether to display the plot.
+    - width: Width of the plot.
     """
     ntauE_indicators = {
         'Alcator A': {'arrow': True,
@@ -4137,7 +4137,6 @@ def plot_ntau_vs_T(on_or_before_date=None,
         ax.annotate(r'$0.1$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5e18), xycoords='data', alpha=1, color='red', rotation=0)
         ax.annotate(r'$0.01$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e17), xycoords='data', alpha=1, color='red', rotation=0)
         ax.annotate(r'$0.001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 5.5e16), xycoords='data', alpha=1, color='red', rotation=0)
-        #ax.annotate(r'$0.0001$', xy=(xmax, ymax), xytext=(xmax+annotation_offset, 6e15), xycoords='data', alpha=1, color='red', rotation=0)
         
         # Inner annotations
         ax.annotate(r'$(n \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(25, 4.9e20), xycoords='data', alpha=1, color='black', rotation=25)
@@ -4146,8 +4145,9 @@ def plot_ntau_vs_T(on_or_before_date=None,
         if on_or_before_date is None or on_or_before_date.year > datetime.now().year:
             ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
+        # Show the year on the bottom right if a specific year is requested
         if on_or_before_date is not None:
-            ax.annotate(f'{on_or_before_date.year}', (10, 1.5e15), alpha=0.8, size=40)
+            ax.annotate(f'{on_or_before_date.year}', (12, 1.7e15), alpha=0.8, size=40)
             if on_or_before_date.year > 2025:
                 ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
                 ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
