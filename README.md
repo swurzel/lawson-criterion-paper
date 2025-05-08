@@ -1,7 +1,11 @@
-# Progress toward Fusion Energy Breakeven and Gain as Measured against the Lawson Criterion
+# Progress toward Fusion Energy Breakeven and Gain as Measured against the Lawson Criteria
 
 ### Description
-The purpose of this codebase is to generate the figures and tables in the paper:
+The purpose of this codebase is to generate the figures and tables for the papers:
+
+S.E. Wurzel, S.C. Hsu, "Update: Progress toward fusion energy breakeven and gain as
+measured against the Lawson criteria" arXiv:2505.03834 [physics.plasm-ph] (2025)
+https://arxiv.org/abs/2505.03834
 
 S.E. Wurzel, S.C. Hsu, "Progress toward fusion energy breakeven and gain as
 measured against the Lawson criterion" Physics of Plasmas 29, 062103 (2022)
@@ -10,12 +14,7 @@ https://doi.org/10.1063/5.0083990
 The code is writen in Python 3 and uses juypytext to store the code as
 a text-only .py file but is intended to be used in a jupyter notebook.
 
-This code is not optimized for speed. Running the entire notebook may take
-upward of 20 minutes. The main bottleneck is calculating large numbers of
-fusion reactivities by integration of cross section over a maxwellian velocity
-distribution. These could be cached, however for the sake of simplicity
-there is currently no caching functionality.
-
+On a modern laptop the code takes about five minutes to run.
 
 ### Systemm Dependencies
 - MacTex https://tug.org/mactex/mainpage2024.html
@@ -71,4 +70,4 @@ https://doi.org/10.1088/0029-5515/40/4/310
 ### License
 MIT License, see LICENSE.
 
-- Sam Wurzel, 21 June 2024
+- Sam Wurzel, 8 May 2025
