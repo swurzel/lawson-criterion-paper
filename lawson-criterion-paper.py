@@ -2745,13 +2745,6 @@ experimental_result_df['E_F'] = experimental_result_df['E_F'].astype(float)
 experimental_result_df['P_ext'] = experimental_result_df['P_ext'].astype(float)
 experimental_result_df['P_F'] = experimental_result_df['P_F'].astype(float)
 
-# Set boolean for whether the 2025 update changed the value
-experimental_result_df['include_lawson_plots'] = experimental_result_df['include_lawson_plots'].notna()
-experimental_result_df['include_Qsci_vs_date_plot'] = experimental_result_df['include_Qsci_vs_date_plot'].notna()
-experimental_result_df['new_or_changed_2025_update'] = experimental_result_df['new_or_changed_2025_update'].notna()
-experimental_result_df['Qsci_comment'] = experimental_result_df['Qsci_comment'].astype(str)
-
-
 # DATE HANDLING
 # If the date field exists, clear the year field so we know to use the full date
 experimental_result_df['Year'] = experimental_result_df['Year'].mask(experimental_result_df['Date'].notna(), None)
@@ -2793,7 +2786,6 @@ q_sci_airtable_latex_map = {
     'E_F': r'\thead{$Y$ \\ (\si{J})}',
     'P_ext': r'\thead{$P_{\rm in}$ \\ (\si{W})}',
     'P_F': r'\thead{$P_{\rm F}$ \\ (\si{W})}',
-    #'Qsci_comment': 'Comment',
 }
 
 q_sci_calculated_latex_map = {
