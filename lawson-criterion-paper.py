@@ -8,9 +8,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: Python 3 (ipykernel)
+#     display_name: .venv
 #     language: python
 #     name: python3
 # ---
@@ -162,6 +162,8 @@ if not os.path.exists('tables_csv'):
     os.makedirs('tables_csv')
 if not os.path.exists('images'):
     os.makedirs('images')
+if not os.path.exists('animation'):
+    os.makedirs('animation')
 
 print('Setup complete.')
 
