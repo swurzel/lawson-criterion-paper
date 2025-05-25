@@ -64,8 +64,9 @@ def siunitx_num(s):
         return r'\num{'+ str(s) +'}'
     
 def cite(bibtex_strings):
-    citation = f"\onlinecite{{{','.join(bibtex_strings)}}}"
-    return citation
+    if bibtex_strings is None:
+        return r'$\ast\ast$' # two asterisks
+    return f"\onlinecite{{{','.join(bibtex_strings)}}}"
 
 def CustomLogarithmicFormatter(x, pos=None):
     """This formatter is intended for non-scientific notation tick labels

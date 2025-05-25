@@ -2769,6 +2769,11 @@ experimental_result_df = experimental_result_df.sort_values(by='Display Date')
 # For updated paper, to keep the references short, refer to our 2022 paper for unchanged data
 mask = experimental_result_df['new_or_changed_2025_update'] == False
 experimental_result_df.loc[mask, 'Bibtex Strings'] = experimental_result_df.loc[mask, 'Bibtex Strings'].apply(lambda x: [r'2022_Wurzel_Hsu'])
+# Print a digest of the experimental results. List the names of each project and how many data points each has
+print(f'Experimental Results Digest:')
+print(f'Total: {len(experimental_result_df)} data point(s)')
+for name, group in experimental_result_df.groupby('Project Displayname'):
+    print(f'  {name}: {len(group)} data point(s)')
 
 
 # %% [markdown]
@@ -3358,7 +3363,6 @@ def mcf_formatting(row):
         row['tau_E_star'] += r'$^{\#}$'
     
     return row
-
 latex_mcf_df = mcf_df.apply(mcf_formatting, axis=1)
 
 mcf_table_footnote = r"""\\$*$ Peak value of density or temperature has been inferred from volume-averaged value as described in Sec.~\ref{sec:inferring_peak_from_average}.\\
@@ -3905,6 +3909,9 @@ def plot_ntau_vs_T(on_or_before_date=None,
         'GOL-3': {'arrow': True,
                 'xabs': 3,
                 'yabs': 7e17},
+        'HL-3': {'arrow': True,
+                'xabs': 10,
+                'yabs': 2.5e18},
         'IPA': {'arrow': True,
                 'xabs': 1.5,
                 'yabs': 5e16},
@@ -4224,6 +4231,9 @@ nTtauE_indicators = {
     'GOL-3': {'arrow': True,
               'xabs': 3,
               'yabs': 1e18},
+    'HL-3': {'arrow': True,
+             'xabs': 13,
+             'yabs': 2.5e19},
     'IPA': {'arrow': True,
             'xabs': 2.5,
             'yabs': 3e16},
