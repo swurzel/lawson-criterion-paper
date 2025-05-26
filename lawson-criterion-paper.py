@@ -3673,8 +3673,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     fig.set_size_inches(figsize_fullpage)
     
     # Configure axes
-    ax.set_ylim(0, 3)
-    ax.set_xlim(date(1990, 1, 1), date(2025, 1, 1))
+    #ax.set_ylim(0, 3)
+    ax.set_xlim(date(1990, 1, 1), date(2026, 1, 1))
     ax.set_yscale('linear')
     ax.set_xlabel(r'Year')
     ax.set_ylabel(r'$Q_{\rm sci}$')
@@ -3733,12 +3733,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
     # Annotate some shots with braces
     BraceAnnotation(ax, 'TFTR', x_date=date(1994, 11, 1), y_pos=0.3, width_days=270, leg_height=0.05, head_height=0.04, line_width=1)
-    BraceAnnotation(ax, 'NIF', x_date=date(2022, 6, 1), y_pos=2.4, width_days=700, leg_height=0.05, head_height=0.05, line_width=1)
+    BraceAnnotation(ax, 'NIF', x_date=date(2023, 3, 1), y_pos=4.2, width_days=1000, leg_height=0.05, head_height=0.05, line_width=1)
     BraceAnnotation(ax, 'NIF', x_date=date(2016, 10, 1), y_pos=0.03, width_days=3.5*365, leg_height=0.05, head_height=0.05, line_width=1)
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     # Add inset for log-linear version
-    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.433, 0.06, 1, 0.9), bbox_transform=ax.transAxes)
+    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.35, -0.05, 1, 0.9), bbox_transform=ax.transAxes)
     for concept in concept_list:
         concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
         concept_q_sci_df = concept_q_sci_df[concept_q_sci_df['Q_sci'].notna()]
