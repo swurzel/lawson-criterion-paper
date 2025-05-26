@@ -29,6 +29,8 @@ import sys
 import os
 import configparser
 from decimal import Decimal
+from datetime import date, timedelta
+import matplotlib.dates as mdates
 
 import scipy
 from scipy import integrate
@@ -48,7 +50,6 @@ from tqdm import tqdm
 from PIL import Image
 import glob
 
-
 # Import our library/utility fuctions
 from lib import latexutils
 from lib import fusionlib
@@ -58,6 +59,7 @@ from lib import conversions
 from lib import plasmaprofile
 from lib import experiment
 from lib import exceptions
+from lib import annotationlib
 
 # Plot styles
 plt.style.use(['./styles/medium.mplstyle'])
@@ -3611,61 +3613,8 @@ icf_ex = experiment.IndirectDriveICFDTBettiCorrectionExperiment()
 
 # %%
 from datetime import date, timedelta
-from matplotlib.dates import date2num, num2date
-from matplotlib.patches import PathPatch
-from matplotlib.path import Path
 import matplotlib.dates as mdates
-
-annotation_text_size = 11
-
-class BraceAnnotation:
-    def __init__(self, ax, text, x_date, y_pos, width_days, leg_height, head_height, line_width, text_size=annotation_text_size):
-        self.ax = ax
-        self.text = text
-        self.x_date = x_date    
-        self.y_pos = y_pos
-        self.width = width_days
-        self.leg_height = leg_height
-        self.head_height = head_height
-        self.line_width = line_width
-        self.text_size = text_size
-        
-        # Convert date to matplotlib number for calculations
-        x = mdates.date2num(x_date)
-        width = mdates.date2num(x_date + timedelta(days=width_days)) - mdates.date2num(x_date - timedelta(days=width_days))
-
-        # Define the bracket vertices
-        verts = [
-            (x - width/2, y_pos),           # Left end
-            (x - width/2, y_pos + leg_height),  # Left top
-            (x + width/2, y_pos + leg_height),  # Right top
-            (x + width/2, y_pos),           # Right end
-            (x, y_pos + leg_height),          # Center start (middle of horizontal line)
-            (x, y_pos + leg_height + head_height)    # Center end (to top)
-        ]
-        
-        # Define the path codes
-        codes = [
-            Path.MOVETO,      # Start at left end
-            Path.LINETO,      # Draw to left top
-            Path.LINETO,      # Draw to right top
-            Path.LINETO,      # Draw to right end
-            Path.MOVETO,      # Move to center bottom (without drawing)
-            Path.LINETO       # Draw center line
-        ]
-        
-        # Create and add the path
-        path = Path(verts, codes)
-        patch = PathPatch(path, facecolor='none', edgecolor='black', lw=line_width)
-        ax.add_patch(patch)
-        
-        # Add the text
-        ax.text(x, y_pos + leg_height + head_height, text,
-                horizontalalignment='center',
-                verticalalignment='bottom',
-                size=text_size)
-
-
+from lib.annotationlib import BraceAnnotation
 
 with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Setup figure
@@ -3673,16 +3622,20 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     fig.set_size_inches(figsize_fullpage)
     
     # Configure axes
-    #ax.set_ylim(0, 3)
+    ax.set_ylim(0, 5)
     ax.set_xlim(date(1990, 1, 1), date(2026, 1, 1))
     ax.set_yscale('linear')
     ax.set_xlabel(r'Year')
     ax.set_ylabel(r'$Q_{\rm sci}$')
     ax.grid(which='major')
+    annotation_text_size = 11
+    
         
     # Set width to about 2 month in days
     width = timedelta(days=60)
     
+    # Z-order for concepts
+    z_concept_dict = {'Tokamak': 9, 'Laser Indirect Drive': 7, 'Laser Direct Drive': 8}
     # Plot bars by concept
     for concept in concept_list:
         concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
@@ -3692,9 +3645,10 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                     concept_q_sci_df['Q_sci'],
                     width=width,
                     color=concept_dict[concept]['color'],
-                    label=concept)
-    """
+                    label=concept,
+                    zorder=z_concept_dict[concept])
     # Annotate all shots directly
+    """
     for index, row in q_sci_df.iterrows():
         ax.annotate(
             f"{row['Project Displayname']}",
@@ -3716,14 +3670,15 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             fontsize=annotation_text_size
             )   
     
-    # Annotate some shots with arrows (OMEGA)
-    shots_to_annotate_with_arrows = ['102154']
+    # Annotate some shots with arrows (OMEGA, JET)
+    arrow_dict = {'102154': {'xytext': (row['Date'] - timedelta(days=5.5*360), row['Q_sci'] + 0.1)}, #OMEGA
+                  '104522': {'xytext': (row['Date'] - timedelta(days=1*360), row['Q_sci'] + 0.5)}} #JET   
     arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_with_arrows)]
     for index, row in arrow_annotate_df.iterrows():
         ax.annotate(
             f"{row['Project Displayname']}",
             xy=(row['Date'], row['Q_sci']),
-            xytext=(row['Date'] - timedelta(days=4.5*360), row['Q_sci'] + 0.3),
+            xytext=arrow_dict[row['Shot']]['xytext'],
             rotation=0,
             fontsize=annotation_text_size,
             arrowprops={'arrowstyle': '->',
@@ -3738,7 +3693,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     # Add inset for log-linear version
-    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.35, -0.05, 1, 0.9), bbox_transform=ax.transAxes)
+    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.323, -0.09, 1, 1), bbox_transform=ax.transAxes)
+    width = timedelta(days=90)
     for concept in concept_list:
         concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
         concept_q_sci_df = concept_q_sci_df[concept_q_sci_df['Q_sci'].notna()]
@@ -3748,7 +3704,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                     width=width,
                     color=concept_dict[concept]['color'],
                     label=concept,
-                    zorder=10)
+                    zorder=z_concept_dict[concept])
     inset_ax.set_yscale('log')
     # Add horizontal grid lines at major ticks
     inset_ax.yaxis.grid(True, which='major', linewidth=0.8, zorder=0)
