@@ -49,6 +49,7 @@ from matplotlib.ticker import StrMethodFormatter, NullFormatter
 from tqdm import tqdm
 from PIL import Image
 import glob
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # Import our library/utility fuctions
 from lib import latexutils
@@ -3691,9 +3692,10 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     BraceAnnotation(ax, 'NIF', x_date=date(2023, 3, 1), y_pos=4.2, width_days=1000, leg_height=0.05, head_height=0.05, line_width=1)
     BraceAnnotation(ax, 'NIF', x_date=date(2016, 10, 1), y_pos=0.03, width_days=3.5*365, leg_height=0.05, head_height=0.05, line_width=1)
 
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     # Add inset for log-linear version
-    inset_ax = inset_axes(ax, width="50%", height="50%", bbox_to_anchor=(-0.323, -0.09, 1, 1), bbox_transform=ax.transAxes)
+    inset_ax = inset_axes(ax, width="50%", height="50%",
+                          bbox_to_anchor=(-0.323, -0.09, 1, 1),
+                          bbox_transform=ax.transAxes)
     width = timedelta(days=90)
     for concept in concept_list:
         concept_q_sci_df = q_sci_df[q_sci_df['Concept Displayname'] == concept]
@@ -3710,7 +3712,12 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     inset_ax.yaxis.grid(True, which='major', linewidth=0.8, zorder=0)
     # Set the y-axis formatter to plain numbers (not scientific notation)
     inset_ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
-    inset_ax.tick_params(labelsize=9)
+    # Generate a list of years you want as ticks, starting from 1992
+    #years = range(1992, inset_ax.get_xlim()[1].year + 8)
+    #year_ticks = [datetime.datetime(year, 1, 1) for year in years]
+    #inset_ax.set_xticks(year_ticks)
+    #inset_ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    inset_ax.tick_params(labelsize=11)
 
 
 
