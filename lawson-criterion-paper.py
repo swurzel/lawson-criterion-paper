@@ -3,12 +3,11 @@
 # jupyter:
 #   jupytext:
 #     custom_cell_magics: kql
-#     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.1
+#       jupytext_version: 1.16.2
 #   kernelspec:
 #     display_name: .venv
 #     language: python
@@ -3674,7 +3673,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Annotate some shots with arrows (OMEGA, JET)
     arrow_dict = {'102154': {'xytext': (row['Date'] - timedelta(days=5.5*360), row['Q_sci'] + 0.1)}, #OMEGA
                   '104522': {'xytext': (row['Date'] - timedelta(days=1*360), row['Q_sci'] + 0.5)}} #JET   
-    arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(shots_to_annotate_with_arrows)]
+    arrow_annotate_df = q_sci_df[q_sci_df['Shot'].isin(arrow_dict.keys())]
     for index, row in arrow_annotate_df.iterrows():
         ax.annotate(
             f"{row['Project Displayname']}",
@@ -4766,7 +4765,6 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     # Add watermark
     if add_prepublication_watermark:
         ax.annotate('Prepublication', (datetime(1960,1,1), 1.5e13), alpha=0.1, size=60, rotation=45)
-    
     # Legend to the right
     #plt.legend(bbox_to_anchor=(1, 1.015), ncol=1)
     
@@ -4778,6 +4776,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     
     plt.show()
     fig.savefig(os.path.join('images', label_filename_dict['fig:scatterplot_nTtauE_vs_year']), bbox_inches='tight')
+    fig.savefig(os.path.join('images',  'triple_product_records.svg'))
 
 
 # %% [markdown]
