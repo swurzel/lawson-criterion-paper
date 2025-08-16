@@ -2936,7 +2936,7 @@ latex_q_sci_df = latex_q_sci_df.apply(lambda row: format_q_sci_experimental_resu
 # Rename column headers
 latex_q_sci_df = latex_q_sci_df.rename(columns={**q_sci_airtable_latex_map, **q_sci_calculated_latex_map})    
 
-caption = "Data for experiments that produced sufficient fusion energy to achieve appreciable values of scientific gain $Q_{\mathrm{sci}}$."
+caption = "Data for experiments that produced sufficient fusion energy to achieve appreciable values of scientific energy gain $Q_{\mathrm{sci}}$."
 label = "tab:q_sci_data_table"
 
 latexutils.latex_table_to_csv(latex_q_sci_df, "tables_csv/q_sci_data.csv")
