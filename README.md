@@ -17,7 +17,7 @@ a text-only .py file to facilitate clean diffs in source control.
 On a modern laptop the entire notebook takes about 3 minutes to generate all plots and tables.
 
 ### Systemm Dependencies
-- MacTex https://tug.org/mactex/mainpage2024.html
+- MacTex https://tug.org/mactex/mactex-download.html
 - Python 3.11
 - uv
 
