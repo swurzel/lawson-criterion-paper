@@ -1,7 +1,7 @@
 [project]
 name = "lawson-criterion-paper"
 version = "0.1.0"
-description = "Add your description here"
+description = "Codebase for generating plots and tables for 'Update: Progress toward fusion energy breakeven and gain as measured against the Lawson criteria'"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -12,10 +12,6 @@ dependencies = [
     "tqdm>=4.60.0",
     "pillow>=10.0.0",
     "jupytext>=1.16.0",
-]
-
-[project.optional-dependencies]
-notebook = [
     "jupyter",
     "jupyterlab",
     "ipykernel",

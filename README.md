@@ -34,10 +34,6 @@ cd lawson-criterion-paper
 # Install the dependencies with uv
 uv sync
 
-# Recommended: If you want to use Jupyter Lab for interacting with the notebook, install with the notebook extras
-# If you plan to use the Jupyter integrations within VSCode (or within Cursor or Windsurf) this is not necessary.
-uv sync --extra notebook
-
 # Create the jupyter notebook from the .py file
 uv run jupytext --to notebook lawson-criterion-paper.py
 
@@ -47,6 +43,7 @@ uv run jupyter-lab lawson-criterion-paper.ipynb
 # From the 'Run' menu select 'Run All Cells'
 
 # The notebook should execute in full, generating all plots and tables.
+# Alternatively, you can use VSCode based Jupyter integration (e.g., within Windsurf or Cursor).
 ```
 
 ### Credits
