@@ -11,17 +11,19 @@ S.E. Wurzel, S.C. Hsu, "Progress toward fusion energy breakeven and gain as
 measured against the Lawson criterion" Physics of Plasmas 29, 062103 (2022)
 https://doi.org/10.1063/5.0083990
 
-The code is writen in Python 3 and uses juypytext to store the code as
-a text-only .py file but is intended to be used in a jupyter notebook.
+The code is intended to be run in a Jupyter notebook. We use juypytext to store the code as
+a text-only .py file to facilitate clean diffs in source control.
 
-On a modern laptop the code takes about five minutes to run.
+On a modern laptop the entire notebook takes about 3 minutes to generate all plots and tables.
 
 ### Systemm Dependencies
 - MacTex https://tug.org/mactex/mainpage2024.html
-- Python 3.X
+- Python 3.11
+- uv
 
 ### Installation
 - Make sure the System Dependencies are already installed
+- Install uv if you haven't already: https://docs.astral.sh/uv/getting-started/installation/
 ```bash
 # Clone the repository
 git clone git@github.com:swurzel/lawson-criterion-paper.git
@@ -29,18 +31,18 @@ git clone git@github.com:swurzel/lawson-criterion-paper.git
 # Navigate to the project directory
 cd lawson-criterion-paper
 
-# Create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+# Install the dependencies with uv
+uv sync
 
-# Install the dependencies
-pip install -r requirements.txt
+# Recommended: If you want to use Jupyter Lab for interacting with the notebook, install with the notebook extras
+# If you plan to use the Jupyter integrations within VSCode (or within Cursor or Windsurf) this is not necessary.
+uv sync --extra notebook
 
 # Create the jupyter notebook from the .py file
-jupytext --to notebook lawson-criterion-paper.py
+uv run jupytext --to notebook lawson-criterion-paper.py
 
 # Run JupyterLab and open lawson-criterion-paper.ipynb
-jupyter-lab lawson-criterion-paper.ipynb
+uv run jupyter-lab lawson-criterion-paper.ipynb
 
 # From the 'Run' menu select 'Run All Cells'
 
@@ -70,4 +72,4 @@ https://doi.org/10.1088/0029-5515/40/4/310
 ### License
 MIT License, see LICENSE.
 
-- Sam Wurzel, 8 May 2025
+- Sam Wurzel, 21 August 2025

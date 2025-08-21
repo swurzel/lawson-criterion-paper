@@ -1,11 +1,13 @@
 .venv/
 *.env
-.ipynb_checkpoints*
+.python-version
+.ipynb_checkpoints/
 *.ipynb
 *.swp
 *.pyc
 *.png
 *.csv
+*.svg
 tables_csv
 tables_latex
 images
