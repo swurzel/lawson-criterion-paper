@@ -88,7 +88,7 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
                       }
 
 # Ploting options
-add_prepublication_watermark = True
+add_prepublication_watermark = False
 
 # Naming for figures
 label_filename_dict = {
@@ -3054,7 +3054,7 @@ def icf_mif_calculate(row):
     elif row['Project Displayname'] == 'NIF':
         row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
                                       tau_burn_s=row['tau_stag'])   
-    elif row['Project Displayname'] == 'MagLIF':
+    elif row['Project Displayname'] == 'Z-Machine':
         row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
                                   tau_burn_s=row['tau_stag'])
     elif row['Project Displayname'] == 'FIREX':
@@ -3898,9 +3898,9 @@ def plot_ntau_vs_T(on_or_before_date=None,
         'LSX': {'arrow': True,
                 'xabs': 0.23,
                 'yabs': 0.9e17},
-        'MagLIF': {'arrow': True,
-                'xabs': 1.3,
-                'yabs': 3.9e19},
+        'Z-Machine': {'arrow': True,
+                'xabs': 1.1,
+                'yabs': 4e19},
         'MAST': {'arrow': True,
                 'xoff': 0.15,
                 'yoff': 0.},
@@ -3995,6 +3995,7 @@ def plot_ntau_vs_T(on_or_before_date=None,
         ax.set_xscale('log')
         ax.set_xlabel(r'$T_{i0}, \langle T_i \rangle_{\rm n} \; {\rm (keV)}$')
         ax.set_ylabel(r'$n_{i0} \tau_E^*, \; n \tau_{\rm stag} \; {\rm (m^{-3}~s)}$')
+        ax.set_axisbelow(True)
         ax.grid('on', which='major', axis='both')
         #ax.set_title('Lawson Parameter vs Ion Temperature', size=16)
 
@@ -4010,7 +4011,7 @@ def plot_ntau_vs_T(on_or_before_date=None,
                             color=mcf_band['color'],
                             #label=mcf_band['label'],
                             label='_hidden' + mcf_band['label'],
-                            zorder=0,
+                            zorder=1,
                             alpha=mcf_band['alpha'],
                             edgecolor=edgecolor,
                         )
@@ -4217,9 +4218,9 @@ nTtauE_indicators = {
     'LSX': {'arrow': True,
             'xabs': 0.7,
             'yabs': 1.2e17},
-    'MagLIF': {'arrow': True,
-               'xabs': 0.5,
-               'yabs': 1e21},
+    'Z-Machine': {'arrow': True,
+               'xabs': 0.15,
+               'yabs': 1.1e21},
     'MAST': {'arrow': True,
              'xoff': 0.15,
              'yoff': 0.06},
@@ -4308,9 +4309,18 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_ylim(ymin, ymax)
     ax.set_yscale('log')
     ax.set_xscale('log')
+    ax.set_axisbelow(True)
     ax.grid('on', which='major', axis='both')
+
+    # Major ticks: one per decade
+    ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, subs=[1.0], numticks=12))
+
+    # Minor ticks: 2–9 within each decade
+    ax.yaxis.set_minor_locator(
+        ticker.LogLocator(base=10.0, subs=np.arange(2.0, 10.0) * 0.1, numticks=100)
+    )
     #ax.set_title('Triple Product vs Ion Temperature', size=16)
-    
+
     ##### MCF Bands
     # In order for ax.fill_between to correctly fill the region that goes to
     # infinity, the values of infinity in the dataframe must be replaced with
@@ -4325,7 +4335,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                         color=mcf_band['color'],
                         #label=mcf_band['label'],
                         label='_hiden_' + mcf_band['label'],
-                        zorder=0,
+                        zorder=1,
                         alpha=mcf_band['alpha'],
                        )
         legend_handles.append(handle)
@@ -4505,7 +4515,7 @@ indicators = {
     'LSX': {'arrow': False,
             'xoff': -1,
             'yoff': 0.2},
-    'MagLIF': {'arrow': True,
+    'Z-Machine': {'arrow': True,
                'xabs': datetime(2021, 6, 1),
                'yabs': 2e20},
     'MAST': {'arrow': False,
@@ -4584,7 +4594,14 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_xlabel(r'Year')
     ax.set_ylabel(r'$n_{i0} T_{i0} \tau_E^*, \; n \langle T_i \rangle_{\rm n} \tau_{\rm stag} \; {\rm (m^{-3}~keV~s)}$')
     ax.grid(which='major')
+    # Major ticks: one per decade
+    ax.yaxis.set_major_locator(ticker.LogLocator(base=10.0, subs=[1.0], numticks=12))
 
+    # Minor ticks: 2–9 within each decade
+    ax.yaxis.set_minor_locator(
+        ticker.LogLocator(base=10.0, subs=np.arange(2.0, 10.0) * 0.1, numticks=100)
+    )
+    
     # Plot horizontal lines for indicated values of Q_MCF (actually rectangles of height
     # equal to difference between maximum and minimum values of triple product at temperature
     # for which the minimum triple product (proportional to pressure) is required.
