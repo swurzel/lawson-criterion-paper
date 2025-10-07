@@ -49,6 +49,8 @@ from tqdm import tqdm
 from PIL import Image
 import glob
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.ticker import MultipleLocator
+
 
 # Import our library/utility fuctions
 from lib import latexutils
@@ -3631,6 +3633,8 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
     ax.set_xlabel(r'Year')
     ax.set_ylabel(r'$Q_{\rm sci}$')
     ax.grid(which='major')
+    ax.minorticks_on()
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
     annotation_text_size = 11
     
         
