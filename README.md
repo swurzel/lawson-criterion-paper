@@ -3,9 +3,9 @@
 ### Description
 The purpose of this codebase is to generate the figures and tables for the papers:
 
-S.E. Wurzel, S.C. Hsu, "Update: Progress toward fusion energy breakeven and gain as
-measured against the Lawson criteria" arXiv:2505.03834 [physics.plasm-ph] (2025)
-https://arxiv.org/abs/2505.03834
+S.E. Wurzel, S.C. Hsu, "Continuing progress toward fusion energy
+breakeven and gain as measured against the Lawson criteria" Phys. Plasmas
+32, 112106 (2025) https://doi.org/10.1063/5.0297357
 
 S.E. Wurzel, S.C. Hsu, "Progress toward fusion energy breakeven and gain as
 measured against the Lawson criterion" Physics of Plasmas 29, 062103 (2022)
@@ -69,4 +69,4 @@ https://doi.org/10.1088/0029-5515/40/4/310
 ### License
 MIT License, see LICENSE.
 
-- Sam Wurzel, 21 August 2025
+- Sam Wurzel, 7 November 2025
