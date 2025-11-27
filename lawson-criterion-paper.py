@@ -2,7 +2,9 @@
 # ---
 # jupyter:
 #   jupytext:
+#     cell_metadata_filter: all
 #     custom_cell_magics: kql
+#     notebook_metadata_filter: all
 #     text_representation:
 #       extension: .py
 #       format_name: percent
@@ -12,6 +14,16 @@
 #     display_name: .venv
 #     language: python
 #     name: python3
+#   language_info:
+#     codemirror_mode:
+#       name: ipython
+#       version: 3
+#     file_extension: .py
+#     mimetype: text/x-python
+#     name: python
+#     nbconvert_exporter: python
+#     pygments_lexer: ipython3
+#     version: 3.11.13
 # ---
 
 # %% [markdown]
@@ -90,7 +102,7 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
                       }
 
 # Ploting options
-add_prepublication_watermark = False
+add_prepublication_watermark = True
 
 # Naming for figures
 label_filename_dict = {
@@ -2364,9 +2376,9 @@ ax.xaxis.set_major_formatter(ticker.FuncFormatter(latexutils.CustomLogarithmicFo
 fig.savefig(os.path.join('images/', label_filename_dict['fig:peaked_broad_profiles_b']), bbox_inches='tight')
 
 # %% [markdown] hidden=true jp-MarkdownHeadingCollapsed=true
-# # Data Plots
+# # Contours of Data Plots
 #
-# This section handles the generation of the plots which contain experimental datapoints (and also plots of the countors of Q for various profile and impurity effects).
+# This section handles the generation of the contours for plots which show relationships between $n$ $\tau_E$ (or $\tau$) and $T_i$ and also plots which contain experimental datapoints.
 
 # %% [markdown]
 # ## Calculate DT requirements accounting for adjustments (profiles, impurities, $C_B$)
@@ -2724,7 +2736,7 @@ for i, req in enumerate(DT_requirement_minimum_values_df['requirement']):
 
 
 # %% [markdown]
-# ## Analysis of Experimental Results
+# # Analysis and Plots of Experimental Results
 
 # %% [markdown]
 # ### Load experimental data
@@ -2735,6 +2747,9 @@ filename = 'data/experimental_results.pkl'
 experimental_result_df = pd.read_pickle(filename)
 # Note the temperatures are stored as strings with the approprate
 # number of significant figures so no changes occur here.
+
+# Change any Project "Magnetized Target Liner Inertial Fusion" to "MagLIF" (temporary until this is changed in database)
+experimental_result_df['Concept Displayname'] = experimental_result_df['Concept Displayname'].replace('Magnetized Liner Inertial Fusion', 'MagLIF')
 
 # Convert scientific notation strings to floats
 experimental_result_df['n_e_avg'] = experimental_result_df['n_e_avg'].astype(float)
@@ -3838,7 +3853,7 @@ def plot_ntau_vs_T(on_or_before_date=None,
                     'yoff': 0},
         'Alcator C': {'arrow': True,
                     'xoff': -0.65,
-                    'yoff': -0.2},
+                    'yoff': -0.1},
         'ASDEX': {'arrow': True,
                 'xoff': -0.55,
                 'yoff': 0},
@@ -4504,6 +4519,9 @@ indicators = {
     'ETA-BETA II': {'arrow': True,
                     'xabs': datetime(1957, 1, 1),
                     'yabs': 2.5e15},
+    'FT': {'arrow': False,
+           'xoff': 1.3,
+           'yoff': -.15},
     'FuZE': {'arrow': True,
              'xabs': datetime(2027, 1, 1),
              'yabs': 9e17},

@@ -1,0 +1,4 @@
+formats = "ipynb,py:percent"
+custom_cell_magics = "kql"
+notebook_metadata_filter = "all"
+cell_metadata_filter = "all"

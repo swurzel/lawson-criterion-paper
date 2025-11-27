@@ -11,7 +11,7 @@ dependencies = [
     "matplotlib>=3.9.0",
     "tqdm>=4.60.0",
     "pillow>=10.0.0",
-    "jupytext>=1.16.0",
+    "jupytext==1.18.1",
     "jupyter",
     "jupyterlab",
     "ipykernel",
