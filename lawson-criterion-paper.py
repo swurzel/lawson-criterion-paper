@@ -2748,9 +2748,6 @@ experimental_result_df = pd.read_pickle(filename)
 # Note the temperatures are stored as strings with the approprate
 # number of significant figures so no changes occur here.
 
-# Change any Project "Magnetized Target Liner Inertial Fusion" to "MagLIF" (temporary until this is changed in database)
-experimental_result_df['Concept Displayname'] = experimental_result_df['Concept Displayname'].replace('Magnetized Liner Inertial Fusion', 'MagLIF')
-
 # Convert scientific notation strings to floats
 experimental_result_df['n_e_avg'] = experimental_result_df['n_e_avg'].astype(float)
 experimental_result_df['n_e_max'] = experimental_result_df['n_e_max'].astype(float)
@@ -2826,7 +2823,7 @@ q_sci_df = Q_sci_experimental_result_df.filter(items=q_sci_keys)
 
 #######################
 # MCF
-MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'RFP', 'Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'FRC', 'MTF']
+MCF_concepts = ['Tokamak', 'Spherical Tokamak', 'Stellarator', 'Reverse Field Pinch', 'Stabilized Pinch', 'Spheromak', 'Mirror', 'Z Pinch', 'Field Reversed Configuration', 'Magnetized Target Fusion']
 mcf_experimental_result_df = experimental_result_df.loc[
     (experimental_result_df['Concept Displayname'].isin(MCF_concepts)) & 
     (experimental_result_df['include_lawson_plots'] == True)
@@ -2865,7 +2862,7 @@ mcf_df = mcf_experimental_result_df.filter(items=mcf_keys)
 
 #######################
 # ICF/MIF
-ICF_MIF_concepts = ['Laser Direct Drive', 'Laser Indirect Drive', 'MagLIF']
+ICF_MIF_concepts = ['Laser Direct Drive', 'Laser Indirect Drive', 'Magnetized Liner Inertial Fusion']
 icf_mif_experimental_result_df = experimental_result_df.loc[
     (experimental_result_df['Concept Displayname'].isin(ICF_MIF_concepts)) & 
     (experimental_result_df['include_lawson_plots'] == True)
@@ -3192,24 +3189,37 @@ rfp_peaking_density = 1.2
 rfp_citations = ['Chapman_2002']
 
 
-peaking_dict = {'Tokamak': {'peaking_temperature': tokamak_peaking_temperature,
-                            'peaking_density': tokamak_peaking_density,
-                            'citations': tokamak_profile.citations},
-                'Stellarator': {'peaking_temperature': stellarator_peaking_temperature,
-                                'peaking_density': stellarator_peaking_density,
-                                'citations': stellarator_profile.citations},
-                'Spherical Tokamak': {'peaking_temperature': spherical_tokamak_peaking_temperature,
-                                      'peaking_density': spherical_tokamak_peaking_density,
-                                      'citations': spherical_tokamak_profile.citations},
-                'FRC': {'peaking_temperature': frc_peaking_temperature,
-                        'peaking_density': frc_peaking_density,
-                        'citations': frc_citations},
-                'RFP': {'peaking_temperature': rfp_peaking_temperature,
-                        'peaking_density': rfp_peaking_density,
-                        'citations': rfp_citations},
-                'Spheromak': {'peaking_temperature': 2,
-                              'peaking_density': 1.5,
-                              'citations': ['Hill_2000']},
+peaking_dict = {
+                'Tokamak': {
+                    'peaking_temperature': tokamak_peaking_temperature,
+                    'peaking_density': tokamak_peaking_density,
+                    'citations': tokamak_profile.citations,
+                },
+                'Stellarator': {
+                    'peaking_temperature': stellarator_peaking_temperature,
+                    'peaking_density': stellarator_peaking_density,
+                    'citations': stellarator_profile.citations,
+                },
+                'Spherical Tokamak': {
+                    'peaking_temperature': spherical_tokamak_peaking_temperature,
+                    'peaking_density': spherical_tokamak_peaking_density,
+                    'citations': spherical_tokamak_profile.citations,
+                },
+                'Field Reversed Configuration': {
+                    'peaking_temperature': frc_peaking_temperature,
+                    'peaking_density': frc_peaking_density,
+                    'citations': frc_citations,
+                },
+                'Reverse Field Pinch': {
+                    'peaking_temperature': rfp_peaking_temperature,
+                    'peaking_density': rfp_peaking_density,
+                    'citations': rfp_citations,
+                },
+                'Spheromak': {
+                    'peaking_temperature': 2,
+                    'peaking_density': 1.5,
+                    'citations': ['Hill_2000'],
+                },
                 # Peaking factors are not needed for the following concepts
                 #'Z Pinch': {'peaking_temperature': 2,
                 #            'peaking_density': 2},
@@ -3420,19 +3430,29 @@ mcf_columns_to_display = [
 ]
 
 ## Split into multiple MCF tables since there are too many rows for one page
-table_list = [{'concepts': ['Tokamak', 'Spherical Tokamak'],
-              'caption': 'Data for tokamaks and spherical tokamaks.',
-              'label': 'tab:mainstream_mcf_data_table',
-              'filename': 'data_table_mcf_mainstream.tex',
-              'filename_csv': 'tables_csv/mcf_mainstream.csv',
-              },
-              {'concepts': ['Stellarator', 'FRC', 'RFP', 'Z Pinch', 'Pinch', 'Mirror', 'Spheromak', 'MTF'],
-              'caption': 'Data for other MCF (i.e., other than tokamaks or spherical tokamaks) and lower-density MIF concepts.',
-              'label': 'tab:alternates_mcf_data_table',
-              'filename': 'data_table_mcf_alternates.tex',
-              'filename_csv': 'tables_csv/mcf_alternates.csv',
-              },
-             ]
+table_list = [
+             {
+                 'concepts': ['Tokamak', 'Spherical Tokamak'],
+                 'caption': 'Data for tokamaks and spherical tokamaks.',
+                 'label': 'tab:mainstream_mcf_data_table',
+                 'filename': 'data_table_mcf_mainstream.tex',
+                 'filename_csv': 'tables_csv/mcf_mainstream.csv',
+             },
+             {
+                 'concepts': ['Stellarator',
+                              'Field Reversed Configuration',
+                              'Reverse Field Pinch',
+                              'Z Pinch',
+                              'Stabilized Pinch',
+                              'Mirror',
+                              'Spheromak',
+                              'Magnetized Target Fusion'],
+                 'caption': 'Data for other MCF (i.e., other than tokamaks or spherical tokamaks) and lower-density MIF concepts.',
+                 'label': 'tab:alternates_mcf_data_table',
+                 'filename': 'data_table_mcf_alternates.tex',
+                 'filename_csv': 'tables_csv/mcf_alternates.csv',
+             },
+            ]
 
 for table_dict in table_list:
     concept_latex_mcf_df = latex_mcf_df[latex_mcf_df['Concept Displayname'].isin(table_dict['concepts'])]    
@@ -3528,59 +3548,86 @@ lime = colors [8]
 teal = colors [9]
 black = 'black'
 
-concept_dict = {'Tokamak': {'color': red,
-                            'marker': 'o',
-                            'markersize': 70,
-                           },
-                'Stellarator': {'color': green,
-                                'marker': '*',
-                                'markersize': 200,
-                               },
-                'RFP': {'color': orange,
-                        'marker': 'v',
-                        'markersize': 70,
-                       },
-                'Z Pinch': {'color': blue,
-                            'marker': '|',
-                            'markersize': 70,
-                           },
-                'MagLIF': {'color': purple,
-                           'marker': '2',
-                           'markersize': 70,
-                           },
-                'FRC': {'color': teal,
-                        'marker': 'd',
-                        'markersize': 70,
-                       },
-                'MTF': {'color': purple,
-                        'marker': 'o',
-                        'markersize': 70,
-                       },
-                'Spheromak': {'color': pink,
-                              'marker': 's',
-                              'markersize': 70,
-                             },
-                'Pinch': {'color': lime,
-                          'marker': 'X',
-                          'markersize': 70,
-                         },
-                'Mirror': {'color': brown,
-                           'marker': '_',
-                           'markersize': 70,
-                          },
-                'Spherical Tokamak': {'color': grey,
-                                      'marker': 'p',
-                                      'markersize': 70,
-                                     },
-                'Laser Indirect Drive': {'color': black,
-                                         'marker': 'x',
-                                         'markersize': 40,
-                                        },
-                'Laser Direct Drive': {'color': grey,
-                                       'marker': '.',
-                                       'markersize': 70,
-                                      }
-                }
+concept_dict = {
+                'Tokamak': {
+                    'color': red,
+                    'marker': 'o',
+                    'markersize': 70,
+                    'legend_display': 'Tokamak',
+                },
+                'Stellarator': {
+                    'color': green,
+                    'marker': '*',
+                    'markersize': 200,
+                    'legend_display': 'Stellarator',
+                },
+                'Reverse Field Pinch': {
+                    'color': orange,
+                    'marker': 'v',
+                    'markersize': 70,
+                    'legend_display': 'RFP',
+                },
+                'Z Pinch': {
+                    'color': blue,
+                    'marker': '|',
+                    'markersize': 70,
+                    'legend_display': 'Z Pinch',
+                },
+                'Magnetized Liner Inertial Fusion': {
+                    'color': purple,
+                    'marker': '2',
+                    'markersize': 70,
+                    'legend_display': 'MagLIF',
+                },
+                'Field Reversed Configuration': {
+                    'color': teal,
+                    'marker': 'd',
+                    'markersize': 70,
+                    'legend_display': 'FRC',
+                },
+                'Magnetized Target Fusion': {
+                    'color': purple,
+                    'marker': 'o',
+                    'markersize': 70,
+                    'legend_display': 'MTF',
+                },
+                'Spheromak': {
+                    'color': pink,
+                    'marker': 's',
+                    'markersize': 70,
+                    'legend_display': 'Spheromak',
+                },
+                'Stabilized Pinch': {
+                    'color': lime,
+                    'marker': 'X',
+                    'markersize': 70,
+                    'legend_display': 'Pinch',
+                },
+                'Mirror': {
+                    'color': brown,
+                    'marker': '_',
+                    'markersize': 70,
+                    'legend_display': 'Mirror',
+                },
+                'Spherical Tokamak': {
+                    'color': grey,
+                    'marker': 'p',
+                    'markersize': 70,
+                    'legend_display': 'Spherical Tokamak',
+                },
+                'Laser Indirect Drive': {
+                    'color': black,
+                    'marker': 'x',
+                    'markersize': 40,
+                    'legend_display': 'Laser Indirect Drive',
+                },
+                'Laser Direct Drive': {
+                    'color': grey,
+                    'marker': '.',
+                    'markersize': 70,
+                    'legend_display': 'Laser Direct Drive',
+                },
+               }
 
 concept_list = concept_dict.keys()
 #concept_list = ['Tokamak', 'Laser Indirect Drive', 'Laser Indirect Drive', 'Stellarator', 'MagLIF', 'Spherical Tokamak', 'Z Pinch', 'FRC', 'Spheromak', 'Mirror', 'RFP', 'Pinch'] 
@@ -3667,7 +3714,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                     concept_q_sci_df['Q_sci'],
                     width=width,
                     color=concept_dict[concept]['color'],
-                    label=concept,
+                    label=concept_dict[concept].get('legend_display', concept),
                     zorder=z_concept_dict[concept])
     # Annotate all shots directly
     """
@@ -3726,7 +3773,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                     concept_q_sci_df['Q_sci'],
                     width=width,
                     color=concept_dict[concept]['color'],
-                    label=concept,
+                    label=concept_dict[concept].get('legend_display', concept),
                     zorder=z_concept_dict[concept])
     inset_ax.set_yscale('log')
     # Add horizontal grid lines at major ticks
@@ -4056,15 +4103,16 @@ def plot_ntau_vs_T(on_or_before_date=None,
                 edgecolor='white'
             else:
                 edgecolor=None
-            handle = ax.scatter(concept_df['T_i_max'],
-                                concept_df['ntauEstar_max'], 
-                                c = concept_dict[concept]['color'], 
-                                marker = concept_dict[concept]['marker'],
-                                s = concept_dict[concept]['markersize'],
-                                edgecolors= edgecolor,
-                                zorder=10,
-                                label=concept,
-                            )
+            handle = ax.scatter(
+                concept_df['T_i_max'],
+                concept_df['ntauEstar_max'],
+                c=concept_dict[concept]['color'],
+                marker=concept_dict[concept]['marker'],
+                s=concept_dict[concept]['markersize'],
+                edgecolors=edgecolor,
+                zorder=10,
+                label=concept_dict[concept].get('legend_display', concept),
+            )
             #legend_handles.append(handle)
             # Annotate data points
             for index, row in concept_df.iterrows():
@@ -4383,7 +4431,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                    c = concept_dict[concept]['color'], 
                    marker = concept_dict[concept]['marker'],
                    zorder=10,
-                   label=concept,
+                   label=concept_dict[concept].get('legend_display', concept),
                    s = concept_dict[concept]['markersize'],
                    edgecolors= 'white',
                   )
@@ -4724,7 +4772,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
                              marker = concept_dict[concept]['marker'],
                              zorder=10,
                              s=point_size,
-                             label=concept,
+                             label=concept_dict[concept].get('legend_display', concept),
                             )
         # Draw lines between datapoints
         plot = ax.plot(concept_df['Date'], concept_df['nTtauEstar_max'], 
