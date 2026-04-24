@@ -1,11 +1,14 @@
 import configparser
 import math
+from pathlib import Path
 
 from lib.exceptions import CrossSectionEnergyRangeError
 
-# Import the reactivity coefficients from config file
+# Import the reactivity coefficients from config file (sibling to this module
+# so the lookup works whether we're running from the paper repo root or
+# imported from an installed wheel in another project).
 config = configparser.ConfigParser()
-config.read(u'config/reactions.ini')
+config.read(Path(__file__).parent / 'reactions.ini')
 
 cross_section_energy_ranges = {'T(d,n)4He': [config['T(d,n)4He'].getfloat('min_E_keV_xsec'),
                                              config['T(d,n)4He_HIGH_ENERGY'].getfloat('max_E_keV_xsec')],

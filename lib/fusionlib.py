@@ -2,6 +2,7 @@ import sys
 import math
 from math import exp
 import configparser
+from pathlib import Path
 
 import numpy
 from scipy import integrate
@@ -16,11 +17,11 @@ Cbr = Cbr * 1e-6 # Convert cm^3 --> m^3
 Cbr = Cbr * 6.24e18 # Convert J --> eV
 Cbr = Cbr / math.sqrt(1000) # Convert ev^0.5 to keV^0.5
 
-# Import the reactivity coefficients from config file
+# Import the reactivity coefficients from config file (sibling to this module
+# so the lookup works whether we're running from the paper repo root or
+# imported from an installed wheel in another project).
 reactions_config = configparser.ConfigParser()
-
-# Get config values once at import time
-reactions_config.read('config/reactions.ini')
+reactions_config.read(Path(__file__).parent / 'reactions.ini')
 
 def optimal_mix_triple_product(T_i,
                            reaction,

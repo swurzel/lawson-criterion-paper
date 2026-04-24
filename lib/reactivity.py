@@ -2,6 +2,7 @@ import os
 import configparser
 import math
 import pickle
+from pathlib import Path
 
 import numpy
 from scipy import integrate
@@ -10,9 +11,11 @@ from lib.exceptions import ReactivityTemperatureTooHighError
 from lib.exceptions import ReactivityTemperatureTooLowError
 from lib import cross_section
 
-# Import the reactivity coefficients from config file
+# Import the reactivity coefficients from config file (sibling to this module
+# so the lookup works whether we're running from the paper repo root or
+# imported from an installed wheel in another project).
 config = configparser.ConfigParser()
-config.read(u'config/reactions.ini')
+config.read(Path(__file__).parent / 'reactions.ini')
     
 def reactivity(T_i, reaction, method='parameterized', zero_low_temperatures=False):
     """Return the fusion reactivity <σv> of a given fusion reaction in m^3/s

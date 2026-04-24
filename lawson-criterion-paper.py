@@ -427,7 +427,7 @@ n = 1e20 # n = n_i = n_e in m^-3
 log_temperature_values = np.logspace(math.log10(0.21), math.log10(100), 100)
 
 # Import the reactivity coefficients from config file
-config.read('config/reactions.ini')
+config.read('lib/reactions.ini')
 reaction_info = config['T(d,n)4He']
     
 # Create dataframe with list of temperatures on log scale
@@ -511,7 +511,7 @@ fig.savefig(os.path.join('images', label_filename_dict['fig:ideal_ignition']), b
 log_temperature_values = np.logspace(math.log10(0.2), math.log10(100), 1000)
 
 # Import the reactivity coefficients from config file
-config.read('config/reactions.ini')
+config.read('lib/reactions.ini')
 reaction_info = config['T(d,n)4He']
     
 # Create dataframe with list of temperatures on log scale
