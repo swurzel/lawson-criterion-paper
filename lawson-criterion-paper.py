@@ -9,7 +9,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.2
+#       jupytext_version: 1.18.1
 #   kernelspec:
 #     display_name: .venv
 #     language: python
@@ -4182,7 +4182,7 @@ def plot_ntau_vs_T(on_or_before_date=None,
         # Show the year on the bottom right if a specific year is requested
         if on_or_before_date is not None:
             ax.annotate(f'{on_or_before_date.year}', (12, 1.7e15), alpha=0.8, size=40)
-            if on_or_before_date.year > 2025:
+            if on_or_before_date.year > datetime.now().year:
                 ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
                 ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
@@ -4880,7 +4880,7 @@ if generate_animation:
     for f in files:
         os.remove(f)
     #date_list = [datetime(year, 1, 1) for year in range(1956, 2039)]
-    date_list = [datetime(year, 1, 1) for year in range(1956, 2025)]
+    date_list = [datetime(year, 12, 31) for year in range(1956, 2027)]
     #date_list = [datetime(2040, 1, 1)] + date_list
 
     for date in tqdm(date_list, desc="Generating plots for animation..."):
