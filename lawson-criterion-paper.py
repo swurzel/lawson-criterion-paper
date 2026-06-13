@@ -4874,14 +4874,21 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 
 # %%
 generate_animation = True # Add a switch here since this can be slow
-if generate_animation: 
+
+# Flip to True to extend the animation into the projected future. This carries
+# the timeline out to ITER's projected D-T year (2039), so SPARC (2027) and ITER
+# (2039) appear as their projected dates are reached, and any frame past the
+# current year is stamped "(projected)". Leave False for the published animation,
+# which ends at the present and shows only achieved results.
+show_projected_future = False
+animation_end_year = 2039 if show_projected_future else 2026
+
+if generate_animation:
     # delete any old images in animation folder
     files = glob.glob('animation/*.png')
     for f in files:
         os.remove(f)
-    #date_list = [datetime(year, 1, 1) for year in range(1956, 2039)]
-    date_list = [datetime(year, 12, 31) for year in range(1956, 2027)]
-    #date_list = [datetime(2040, 1, 1)] + date_list
+    date_list = [datetime(year, 12, 31) for year in range(1956, animation_end_year + 1)]
 
     for date in tqdm(date_list, desc="Generating plots for animation..."):
         plot_ntau_vs_T(on_or_before_date=date,
