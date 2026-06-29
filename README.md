@@ -20,6 +20,7 @@ On a modern laptop the entire notebook takes about 3 minutes to generate all plo
 - MacTex https://tug.org/mactex/mactex-download.html
 - Python 3.11
 - uv
+- just (optional, for `just makeplots`) https://github.com/casey/just
 
 ### Installation
 - Make sure the System Dependencies are already installed
@@ -45,6 +46,8 @@ uv run jupyter-lab lawson-criterion-paper.ipynb
 # The notebook should execute in full, generating all plots and tables.
 # Alternatively, you can use VSCode based Jupyter integration (e.g., within Windsurf or Cursor).
 ```
+
+Alternatively, if you have [`just`](https://github.com/casey/just) installed, run `just makeplots` to regenerate all plots, tables, and the animation from the latest data in one command.
 
 ### Credits
 The cross sections for the reactions,
