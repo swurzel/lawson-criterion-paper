@@ -4875,38 +4875,48 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # %%
 generate_animation = True # Add a switch here since this can be slow
 
-# Flip to True to extend the animation into the projected future. This carries
-# the timeline out to ITER's projected D-T year (2039), so SPARC (2027) and ITER
-# (2039) appear as their projected dates are reached, and any frame past the
-# current year is stamped "(projected)". Leave False for the published animation,
-# which ends at the present and shows only achieved results.
-show_projected_future = False
-animation_end_year = 2039 if show_projected_future else 2026
+# Each animation frame is one PNG per year. We render the full set of frames out
+# to ITER's projected D-T year (2039) once, then assemble two GIFs from them:
+#   - animation/lawson.gif            frames through the current year only
+#                                     (achieved results; this is the published animation)
+#   - animation/lawson_projected.gif  frames all the way to 2039, so SPARC (2027)
+#                                     and ITER (2039) appear as their projected dates
+#                                     are reached. plot_ntau_vs_T() automatically
+#                                     stamps any frame past the current year "(projected)".
+present_year = datetime.now().year
+projected_end_year = 2039
+
+
+def build_animation_gif(frame_years, gif_path, plot_width=800):
+    """Downsize the per-year PNG frames and join them into a looping GIF."""
+    frames = []
+    for year in tqdm(frame_years, desc=f"Building {os.path.basename(gif_path)}"):
+        frame = Image.open(os.path.join('animation', f'{year}_scatterplot_ntauE_vs_T.png'))
+        frame = frame.resize((plot_width, int(frame.height * (plot_width / frame.width))), Image.Resampling.BICUBIC)
+        frames.append(frame)
+    # Save into a GIF file that loops once. Set loop=0 to loop forever.
+    frames[0].save(gif_path, format='GIF',
+                   append_images=frames[1:],
+                   save_all=True,
+                   duration=300, loop=1)
+
 
 if generate_animation:
     # delete any old images in animation folder
     files = glob.glob('animation/*.png')
     for f in files:
         os.remove(f)
-    date_list = [datetime(year, 12, 31) for year in range(1956, animation_end_year + 1)]
 
-    for date in tqdm(date_list, desc="Generating plots for animation..."):
-        plot_ntau_vs_T(on_or_before_date=date,
-                       filename=os.path.join('animation', f'{date.year}_scatterplot_ntauE_vs_T'),
+    all_years = list(range(1956, projected_end_year + 1))
+    for year in tqdm(all_years, desc="Generating plots for animation..."):
+        plot_ntau_vs_T(on_or_before_date=datetime(year, 12, 31),
+                       filename=os.path.join('animation', f'{year}_scatterplot_ntauE_vs_T'),
                        display=False,
                        width=500)
-    frames = []
-    imgs = glob.glob("animation/*.png")
-    imgs.sort()
-    print("Downsizing each image to 800px width and joining into an animation...")
-    plot_width = 800  # Settable variable for plot width
-    for i in tqdm(imgs, desc="Processing images"):
-        new_frame = Image.open(i)
-        new_frame = new_frame.resize((plot_width, int(new_frame.height * (plot_width / new_frame.width))), Image.Resampling.BICUBIC)
-        frames.append(new_frame)
-    # Save into a GIF file that loops once. Set loop=0 to loop forever.
-    frames[0].save('animation/lawson.gif', format='GIF',
-                   append_images=frames[1:],
-                   save_all=True,
-                   duration=300, loop=1)
+
+    print("Downsizing frames and joining into animations...")
+    # Published animation: through the current year, achieved results only.
+    build_animation_gif([year for year in all_years if year <= present_year], 'animation/lawson.gif')
+    # Projected animation: extended to ITER's projected D-T year (2039).
+    build_animation_gif(all_years, 'animation/lawson_projected.gif')
     print("Done.")
