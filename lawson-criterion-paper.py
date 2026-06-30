@@ -102,7 +102,22 @@ reaction_color_dict = {'T(d,n)4He': 'blue',
                       }
 
 # Ploting options
-add_prepublication_watermark = True
+
+# Set True to reproduce the most recent published paper (S.E. Wurzel, S.C. Hsu,
+# Phys. Plasmas 32, 112106, 2025) with the latest code: the experimental-data
+# cell loads the frozen published dataset instead of the live one, and the
+# prepublication watermark is dropped. Leave False for ongoing (unpublished) work.
+use_published_2025_dataset = False
+
+# The prepublication watermark marks unpublished work; it is automatically
+# dropped when reproducing the published paper.
+add_prepublication_watermark = not use_published_2025_dataset
+
+# Year treated as "now" for the animation cutoff and the "(projected)" labelling.
+# For the published reproduction this is the paper's data-freeze year (2025), so the
+# present-day animation ends in 2025 and any later frame is marked projected; for
+# ongoing work it tracks the actual current year.
+present_year = 2025 if use_published_2025_dataset else date.today().year
 
 # Naming for figures
 label_filename_dict = {
@@ -2743,8 +2758,24 @@ for i, req in enumerate(DT_requirement_minimum_values_df['requirement']):
 
 # %%
 # Get the raw experimental result dataframe
-filename = 'data/experimental_results.pkl'
+if use_published_2025_dataset:
+    # Frozen dataset exactly as published in Phys. Plasmas 32, 112106 (2025),
+    # taken from commit eb4187a (the final watermark-off, pre-publication state).
+    filename = 'data/experimental_results_published_2025.pkl'
+else:
+    filename = 'data/experimental_results.pkl'
 experimental_result_df = pd.read_pickle(filename)
+
+if use_published_2025_dataset:
+    # The published pkl predates the concept-naming refactor (commit 526417c), so
+    # map its short concept names onto the current scheme the latest code expects.
+    experimental_result_df['Concept Displayname'] = experimental_result_df['Concept Displayname'].replace({
+        'FRC': 'Field Reversed Configuration',
+        'RFP': 'Reverse Field Pinch',
+        'Pinch': 'Stabilized Pinch',
+        'MTF': 'Magnetized Target Fusion',
+        'MagLIF': 'Magnetized Liner Inertial Fusion',
+    })
 # Note the temperatures are stored as strings with the approprate
 # number of significant figures so no changes occur here.
 
@@ -4175,14 +4206,14 @@ def plot_ntau_vs_T(on_or_before_date=None,
         # Inner annotations
         ax.annotate(r'$(n \tau_{\rm stag})_{\rm ig, hs}^{\rm ICF}$', xy=(xmax, ymax), xytext=(25, 4.9e20), xycoords='data', alpha=1, color='black', rotation=25)
         
-        # Only show "* Maximum projected" if the year is greater than the current year or if no year is being displayed.
-        if on_or_before_date is None or on_or_before_date.year > datetime.now().year:
+        # Only show "* Maximum projected" if the year is greater than the reference year or if no year is being displayed.
+        if on_or_before_date is None or on_or_before_date.year > present_year:
             ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
         # Show the year on the bottom right if a specific year is requested
         if on_or_before_date is not None:
             ax.annotate(f'{on_or_before_date.year}', (12, 1.7e15), alpha=0.8, size=40)
-            if on_or_before_date.year > datetime.now().year:
+            if on_or_before_date.year > present_year:
                 ax.annotate('(projected)', (10, 4e14), alpha=0.8, size=22)
                 ax.annotate('* Maximum projected', xy=(xmax, ymax), xytext=(10.2, 1.2e14), xycoords='data', alpha=1, color='black', size=10)
 
@@ -4520,7 +4551,7 @@ from datetime import datetime
 # Identify triple product results which are records for that particular concept
 def is_concept_record(row):
     # Don't directly show projected results
-    if row['Date'].year > datetime.now().year:
+    if row['Date'].year > present_year:
         return False
     
     concept_displayname = row['Concept Displayname']
@@ -4877,13 +4908,15 @@ generate_animation = True # Add a switch here since this can be slow
 
 # Each animation frame is one PNG per year. We render the full set of frames out
 # to ITER's projected D-T year (2039) once, then assemble two GIFs from them:
-#   - animation/lawson.gif            frames through the current year only
-#                                     (achieved results; this is the published animation)
+#   - animation/lawson.gif            frames through the reference year only
+#                                     (achieved results; ends 2025 for the published
+#                                     reproduction, otherwise the current year)
 #   - animation/lawson_projected.gif  frames all the way to 2039, so SPARC (2027)
 #                                     and ITER (2039) appear as their projected dates
 #                                     are reached. plot_ntau_vs_T() automatically
-#                                     stamps any frame past the current year "(projected)".
-present_year = datetime.now().year
+#                                     stamps any frame past the reference year "(projected)".
+# present_year (the reference year) and add_prepublication_watermark are set in the
+# configuration cell near the top, alongside the use_published_2025_dataset switch.
 projected_end_year = 2039
 
 
@@ -4915,8 +4948,11 @@ if generate_animation:
                        width=500)
 
     print("Downsizing frames and joining into animations...")
-    # Published animation: through the current year, achieved results only.
-    build_animation_gif([year for year in all_years if year <= present_year], 'animation/lawson.gif')
+    # When reproducing the published 2025 dataset, suffix the GIFs so they don't
+    # clobber the working-data animations.
+    gif_suffix = '_published2025' if use_published_2025_dataset else ''
+    # Present-day animation: through the current year, achieved results only.
+    build_animation_gif([year for year in all_years if year <= present_year], f'animation/lawson{gif_suffix}.gif')
     # Projected animation: extended to ITER's projected D-T year (2039).
-    build_animation_gif(all_years, 'animation/lawson_projected.gif')
+    build_animation_gif(all_years, f'animation/lawson_projected{gif_suffix}.gif')
     print("Done.")
