@@ -4373,9 +4373,12 @@ nTtauE_indicators = {
     'W7-AS': {'arrow': True,
               'xoff': 0.15,
               'yoff': -0.06},
+    # Single "W7-X" label with two arrows (one per point). Absolute placement
+    # makes both rows draw the label at the same spot so the copies overlap
+    # into one label while each keeps its own arrow.
     'W7-X': {'arrow': True,
-             'xoff': -0.05,
-             'yoff': 0.4},
+             'xabs': 6.3,
+             'yabs': 3.2e19},
     'Z Facility': {'arrow': True,
                'xabs': 0.3,
                'yabs': 1.1e21},
@@ -4661,6 +4664,12 @@ indicators = {
     'W7-AS': {'arrow': False,
               'xoff': -9,
               'yoff': 0.1},
+    # Single "W7-X" label with two arrows (one per record point). Absolute
+    # placement makes both record rows draw the label at the same spot so the
+    # copies overlap into one label while each keeps its own arrow.
+    'W7-X': {'arrow': True,
+             'xabs': datetime(2021, 1, 1),
+             'yabs': 2.5e19},
     'ZaP': {'arrow': False,
             'xoff': 1,
             'yoff': -0.1},
