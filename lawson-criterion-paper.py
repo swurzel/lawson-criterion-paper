@@ -4550,26 +4550,15 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
 # ## Triple product vs year achieved
 
 # %%
-from datetime import datetime 
-# Identify triple product results which are records for that particular concept
-def is_concept_record(row):
-    # Don't directly show projected results
-    if row['Date'].year > present_year:
-        return False
-    
-    concept_displayname = row['Concept Displayname']
-    date = row['Date']
-    nTtauEstar_max = row['nTtauEstar_max']
-    matches = mcf_mif_icf_df.query("`Concept Displayname` == @concept_displayname & \
-                                    `Date` <= @date & \
-                                    `nTtauEstar_max` > @nTtauEstar_max"
-                                 )
-    if len(matches.index) == 0:
-        return True
-    else:
-        return False
-    
-mcf_mif_icf_df['is_concept_record'] = mcf_mif_icf_df.apply(is_concept_record, axis=1)
+from datetime import datetime
+# Identify triple product results which are records for that particular
+# concept. The definition is shared with downstream consumers (FEB's
+# progress charts), so it lives in lib/records.py.
+from lib.records import is_concept_record
+
+mcf_mif_icf_df['is_concept_record'] = is_concept_record(
+    mcf_mif_icf_df, present_year=present_year
+)
 mcf_mif_icf_df.sort_values(by='Date', inplace=True)
 
 # %% [markdown]
