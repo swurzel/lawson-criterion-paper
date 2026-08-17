@@ -3097,37 +3097,58 @@ def ptau_direct(p_stag_Gbar, tau_burn_s):
     
 def icf_mif_calculate(row):
     """Calculate ptau and nTtau_E for ICF and MIF experiments.
-    
-    The approach for calculating ptau varies. See paper for details.
+
+    The method is chosen by which measurements the row carries, never by
+    project name (new machines must not need code changes): reported
+    stagnation pressure + burn duration use the direct product (this
+    paper's preferred method); older shots reporting only areal density,
+    temperature and yield-over-clean use Betti 2010.
+
+    HISTORY / EXPECTED ROUTES — this dispatch used to be an explicit
+    per-project name chain. The data-driven rules below must route each
+    historical project exactly as that chain did; if curation ever
+    changes which fields a row carries (e.g. a p_stag is added to or
+    removed from an old shot), the derived point will silently switch
+    method, so check against this table:
+
+      ptau_direct (p_stag + tau_stag reported):
+        - NOVA (1994)
+        - NIF (all shots)
+        - Z Facility / MagLIF (all shots)
+        - FIREX (2019)
+        - OMEGA shots from 2013 on (stagnation pressure inferred and
+          reported from then onward)
+        - expected for future pulser/MIF machines entered the MagLIF way
+          (e.g. Pacific Fusion's Demonstration System)
+
+      ptau_betti_2010 (rhoR_tot + T_i_avg + YOC; no reported pressure):
+        - OMEGA shots 2007-2009 only (predate reported stagnation
+          pressure). No other project should ever take this route.
+
+    A row carrying BOTH sets (the 2022 OMEGA shot) intentionally uses
+    ptau_direct — the preferred method wins.
     """
-    # Use Betti 2010 for older OMEGA shots without reported pressure
-    if row['Project Displayname'] == 'OMEGA' and pd.isnull(row['p_stag']):   
+    if not pd.isnull(row['p_stag']) and not pd.isnull(row['tau_stag']):
+        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
+                                  tau_burn_s=row['tau_stag'])
+    elif (not pd.isnull(row['rhoR_tot'])
+          and not pd.isnull(row['T_i_avg'])
+          and not pd.isnull(row['YOC'])):
         row['ptau'] = ptau_betti_2010(rhoR_tot=row['rhoR_tot'],
                                       T_i_avg=row['T_i_avg'],
                                       YOC=row['YOC'])
-    elif row['Project Displayname'] == 'NOVA':
-        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
-                                      tau_burn_s=row['tau_stag']) 
-    elif row['Project Displayname'] == 'OMEGA' and not pd.isnull(float(row['p_stag'])):
-        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
-                                      tau_burn_s=row['tau_stag'])
-    elif row['Project Displayname'] == 'NIF':
-        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
-                                      tau_burn_s=row['tau_stag'])   
-    elif row['Project Displayname'] == 'Z Facility':
-        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
-                                  tau_burn_s=row['tau_stag'])
-    elif row['Project Displayname'] == 'FIREX':
-        row['ptau'] = ptau_direct(p_stag_Gbar=float(row['p_stag']),
-                                  tau_burn_s=row['tau_stag'])
     else:
-        raise ValueError(f'''Could not find a method for calculating ptau for
-                           {row['Project Displayname']}. Stopping.''')
-    
+        raise ValueError(f'''No ptau method for {row['Project Displayname']}:
+                           needs either (p_stag, tau_stag) or
+                           (rhoR_tot, T_i_avg, YOC). Stopping.''')
+
     # Once ptau is calculated, calculating nTtau_E is the same
     row['nTtauE_avg'] = conversions.ptau_to_nTtau_E(row['ptau'])
-    # ntau_E is obtained simply by dividing out the ion temp (except for FIREX)
-    if row['Project Displayname'] == 'FIREX':
+    # ntau_E is obtained simply by dividing out the ion temp, falling back to
+    # the electron temp when no ion temp is reported. Historically FIREX is
+    # the ONLY project without a reported ion temperature (it reports T_e
+    # only — see Section IV.B.2); every other ICF/MIF row divides by T_i_avg.
+    if pd.isnull(row['T_i_avg']):
         row['ntauE_avg'] = row['nTtauE_avg'] / float(row['T_e_avg'])
     else:
         row['ntauE_avg'] = row['nTtauE_avg'] / float(row['T_i_avg'])
@@ -3541,9 +3562,13 @@ for table_dict in table_list:
 # Adjust and infer MIF and ICF values so they can be combined with MCF data
 
 def adjust_icf_mif_result(row):
-    # The FIREX adjustment is called out in Section IV.B.2 "Inferring Lawson paramter from inferred pressure and confinement dynamics"
+    # The electron-temperature fallback is called out in Section IV.B.2 "Inferring Lawson paramter from inferred pressure and confinement dynamics".
+    # Historically FIREX is the ONLY project that takes the T_e_avg branch
+    # (it reports no ion temperature); every other ICF/MIF row uses T_i_avg.
+    # This mirrors the same T_i-null rule in icf_mif_calculate — see the
+    # HISTORY / EXPECTED ROUTES table there.
     # The other adjustments are necessitated by limited profile data for ICF experiments
-    if row['Project Displayname'] == 'FIREX':
+    if pd.isnull(row['T_i_avg']):
         row['T_i_max'] = row['T_e_avg']
     else:
         row['T_i_max'] = row['T_i_avg']
