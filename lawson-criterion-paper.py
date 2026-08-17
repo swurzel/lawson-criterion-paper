@@ -2776,6 +2776,21 @@ if use_published_2025_dataset:
         'MTF': 'Magnetized Target Fusion',
         'MagLIF': 'Magnetized Liner Inertial Fusion',
     })
+
+
+def is_projection_row(row):
+    """True if a dataframe row is a design projection, not an achieved shot.
+
+    Datasets exported by FEB since 2026-08 carry the curated is_projection
+    column (plus the projection_start_year / projection_end_year /
+    projection_nTtau_min box fields); older datasets — including the frozen
+    published-2025 snapshot — fall back to the historical hard-coded list.
+    """
+    if 'is_projection' in row.index:
+        return bool(row['is_projection'])
+    return row['Project Displayname'] in ('SPARC', 'ITER')
+
+
 # Note the temperatures are stored as strings with the approprate
 # number of significant figures so no changes occur here.
 
@@ -4150,7 +4165,7 @@ def plot_ntau_vs_T(on_or_before_date=None,
                 displayname = row['Project Displayname']
                 ntauE_indicator = ntauE_indicators.get(displayname, ntau_default_indicator)
                 text = row['Project Displayname']
-                if text in ['SPARC', 'ITER']:
+                if is_projection_row(row):
                     text += '*'
                 annotation = {'text': text,
                             'xy': (row['T_i_max'], row['ntauEstar_max']),
@@ -4475,7 +4490,7 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             displayname = row['Project Displayname']
             nTtauE_indicator = nTtauE_indicators.get(displayname, default_indicator)
             text = row['Project Displayname']
-            if text in ['SPARC', 'ITER']:
+            if is_projection_row(row):
                 text += '*'
             annotation = {'text': text,
                           'xy': (row['T_i_max'], row['nTtauEstar_max']),
@@ -4830,35 +4845,74 @@ with plt.style.context('./styles/large.mplstyle', after_reset=True):
             annotation['zorder'] = 10
             ax.annotate(**annotation)
 
-    #SPARC
-    sparc_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'SPARC']['nTtauEstar_max'].iloc[0]
-    # SPARC has rebaselined Q>1 to 2027
-    sparc_minus_error = 4.1e21 # lower bound is at bottom of what's projected, Q_fuel = 2
-    sparc_rect = patches.Rectangle((datetime(2027,1,1), sparc_tp-sparc_minus_error), timedelta(days=365*5), sparc_minus_error, edgecolor='white', facecolor='red', alpha=1, hatch='////')
+    # Projection boxes: expected-year span × projected nTtauE range, read
+    # from the dataset (is_projection + projection_* columns, curated in
+    # FEB). The box top is the row's derived nTtauEstar_max; the floor and
+    # year span are data. Only label *placement* stays hard-coded here (it
+    # is display tuning, tweaked per figure).
+    projection_label_xytext = {
+        'SPARC': (datetime(2025, 1, 1), 6e20),
+        'ITER': (datetime(2039, 1, 1), 1e21),
+    }
+    if 'is_projection' in mcf_mif_icf_df.columns:
+        projection_df = mcf_mif_icf_df[
+            (mcf_mif_icf_df['is_projection'] == True) &
+            mcf_mif_icf_df['projection_start_year'].notna()
+        ]
+        for _, row in projection_df.iterrows():
+            displayname = row['Project Displayname']
+            start = datetime(int(row['projection_start_year']), 1, 1)
+            end = datetime(int(row['projection_end_year']), 1, 1)
+            top = float(row['nTtauEstar_max'])
+            floor = float(row['projection_nTtau_min'])
+            rect = patches.Rectangle((start, floor), end - start, top - floor,
+                                     edgecolor='white', facecolor='red', alpha=1,
+                                     hatch='////', linewidth=1, zorder=2)
+            ax.add_patch(rect)
+            annotation = {'text': displayname,
+                          # Arrow points at the box's visual (log-scale) center.
+                          'xy': (start + (end - start) / 2, np.sqrt(top * floor)),
+                          'xytext': projection_label_xytext.get(
+                              displayname,
+                              (start - timedelta(days=365 * 4), floor / 4),
+                          ),
+                          'arrowprops': {'arrowstyle': '->'},
+                          'zorder': 10,
+                         }
+            ax.annotate(**annotation)
+    else:
+        # Legacy hard-coded boxes: faithful reproduction of the published
+        # 2025 figure from the frozen dataset (which predates the
+        # projection columns).
+        #SPARC
+        sparc_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'SPARC']['nTtauEstar_max'].iloc[0]
+        # SPARC has rebaselined Q>1 to 2027
+        sparc_minus_error = 4.1e21 # lower bound is at bottom of what's projected, Q_fuel = 2
+        sparc_rect = patches.Rectangle((datetime(2027,1,1), sparc_tp-sparc_minus_error), timedelta(days=365*5), sparc_minus_error, edgecolor='white', facecolor='red', alpha=1, hatch='////')
 
-    ax.add_patch(sparc_rect)
-    annotation = {'text': 'SPARC',
-                  'xy': (datetime(2029,7,1), sparc_tp - 2e21),
-                  'xytext': (datetime(2025,1,1), 6e20),
-                  'arrowprops': {'arrowstyle': '->'},
-                  'zorder': 10,
-                 }
-    ax.annotate(**annotation)
-    
-    #ITER
-    iter_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'ITER']['nTtauEstar_max'].iloc[0]
-    iter_minus_error = 2.2e21 # lower bound is at bottom of what's projected, Q_fuel = 10
-    # ITER has rebaselined D-T operations to 2039.
-    iter_rect = patches.Rectangle((datetime(2039,1,1), iter_tp - iter_minus_error), timedelta(days=365*5), iter_minus_error, 
-                                 edgecolor='white', facecolor='red', alpha=1, hatch='////', linewidth=1, zorder=2)
-    ax.add_patch(iter_rect)
-    annotation = {'text': 'ITER',
-                  'xy': (datetime(2041,7,1), iter_tp),
-                  'xytext': (datetime(2039,1,1), 1e21),
-                  'arrowprops': {'arrowstyle': '->'},
-                  'zorder': 10,
-                 }
-    ax.annotate(**annotation)
+        ax.add_patch(sparc_rect)
+        annotation = {'text': 'SPARC',
+                      'xy': (datetime(2029,7,1), sparc_tp - 2e21),
+                      'xytext': (datetime(2025,1,1), 6e20),
+                      'arrowprops': {'arrowstyle': '->'},
+                      'zorder': 10,
+                     }
+        ax.annotate(**annotation)
+
+        #ITER
+        iter_tp = mcf_mif_icf_df.loc[mcf_mif_icf_df['Project Displayname'] == r'ITER']['nTtauEstar_max'].iloc[0]
+        iter_minus_error = 2.2e21 # lower bound is at bottom of what's projected, Q_fuel = 10
+        # ITER has rebaselined D-T operations to 2039.
+        iter_rect = patches.Rectangle((datetime(2039,1,1), iter_tp - iter_minus_error), timedelta(days=365*5), iter_minus_error,
+                                     edgecolor='white', facecolor='red', alpha=1, hatch='////', linewidth=1, zorder=2)
+        ax.add_patch(iter_rect)
+        annotation = {'text': 'ITER',
+                      'xy': (datetime(2041,7,1), iter_tp),
+                      'xytext': (datetime(2039,1,1), 1e21),
+                      'arrowprops': {'arrowstyle': '->'},
+                      'zorder': 10,
+                     }
+        ax.annotate(**annotation)
     
     # Label horizontal Q_sci^MCF lines
     ax.annotate(r'$Q_{\rm sci}^{\rm MCF}=\infty$', (mcf_horizontal_range_dict[float('inf')][0]+timedelta(days=365*0.5), 1.22e22), alpha=1, color='red')
